@@ -20,7 +20,7 @@ def mk_chop():
         crack[p:p + 200] += rng.standard_normal(200) * np.exp(-np.arange(200) / (SR * 0.0009)) * rng.uniform(.2, 1)
     x = filt(crack, 'band', [1500, 8000]) * 0.7 + filt(rng.standard_normal(n), 'band', [250, 1400]) * env(n, 0.004, 0.045) * 0.8
     off = int(rng.uniform(0.05, 0.07) * SR)
-    x[off:] += (np.sin(2 * np.pi * rng.uniform(165, 205) * t) * env(n, 0.0008, 0.035) * 1.2 + filt(rng.standard_normal(n), 'band', [800, 2600]) * env(n, 0.0004, 0.012) * 1.3)[:n - off]
+    x[off:] += (filt(rng.standard_normal(n), 'band', [900, 3200]) * env(n, 0.0004, 0.010) * 1.4)[:n - off]
     return x
 def mk_slice():
     n = int(0.2 * SR)
@@ -28,11 +28,10 @@ def mk_slice():
 def mk_tick():
     n = int(0.04 * SR); t = np.arange(n) / SR; f = rng.uniform(2200, 6500)
     return (filt(rng.standard_normal(n), 'band', [f * 0.6, min(f * 1.7, 20000)]) * env(n, 0.0002, 0.003)
-            + np.sin(2 * np.pi * rng.uniform(350, 700) * t) * env(n, 0.0005, 0.007) * 0.45
             + filt(rng.standard_normal(n), 'band', [600, 2000]) * env(n, 0.001, 0.008) * 0.35)
 def mk_chunk():
     n = int(0.25 * SR); t = np.arange(n) / SR
-    return np.sin(2 * np.pi * rng.uniform(110, 150) * t) * env(n, 0.001, 0.05) + filt(rng.standard_normal(n), 'band', [400, 2500]) * env(n, 0.0005, 0.02) * 1.3
+    return filt(rng.standard_normal(n), 'band', [500, 3000]) * env(n, 0.0005, 0.018) * 1.3
 CH = [mk_chop() for _ in range(24)]; SL = [mk_slice() for _ in range(16)]; TK = [mk_tick() for _ in range(60)]; CK = [mk_chunk() for _ in range(12)]
 pick = lambda a: a[rng.integers(len(a))]
 # knife
@@ -63,13 +62,13 @@ if len(gl):
         for _ in range(k): add(pick(TK), t + rng.uniform(0, 1 / 30), rng.uniform(.15, .45), rng.uniform(-.85, .85))
     n = N; dens = np.interp(np.arange(n) / SR, gl[:, 0], np.clip(gl[:, 1] / cmax, 0, 1))
     hiss = filt(rng.standard_normal(n), 'band', [1800, 11000]) * dens ** 0.7 * 0.22
-    L += hiss; R += hiss
 mix = np.stack([L, R], 1)[:int(TOTAL * SR)]
+mix = np.stack([filt(mix[:, 0], 'high', 150), filt(mix[:, 1], 'high', 150)], 1)
 # leveler (steady loudness like the reference)
 win = int(0.05 * SR); mono = np.abs(mix).mean(1); nw = len(mono) // win
 rms = np.sqrt((mono[:nw * win].reshape(nw, win) ** 2).mean(1)) + 1e-6
 k = 7; sm = np.convolve(np.pad(rms, (k, k), mode='edge'), np.ones(2 * k + 1) / (2 * k + 1), mode='valid')
-tg = np.percentile(sm, 70); gain = np.clip(tg / sm, 0.4, 6.0); gain[sm < tg * 0.02] = 1.0
+tg = np.percentile(sm, 70); gain = np.clip(tg / sm, 0.5, 2.0); gain[sm < tg * 0.02] = 1.0
 gs = np.repeat(gain, win); gs = np.concatenate([gs, np.full(len(mono) - len(gs), gs[-1])]); gs = np.convolve(gs, np.ones(win) / win, mode='same')
 mix = mix * gs[:, None]; mix = np.tanh(mix / np.abs(mix).max() * 1.8) / np.tanh(1.8) * 0.92
 h0, hl = log['hook']; hook = mix[int(h0 * SR):int((h0 + hl) * SR)].copy()
