@@ -137,6 +137,18 @@ caster.position.y = RY; caster.castShadow = true; caster.customDepthMaterial = n
 group.add(caster); renderer.localClippingEnabled = true;
 
 // material for pieces / grains: standard PBR + food colour from the original position
+function grainMaterial() {
+  // grains: one colour per cube, computed once per vertex; Lambert lighting (cubes are tiny)
+  const m = new THREE.MeshLambertMaterial();
+  m.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, FU);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>\nattribute vec3 aObj;\nvarying vec3 vGCol;\n${FOOD_GLSL}`)
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nfloat gr; vGCol = pow(foodColor(aObj, gr), vec3(2.2));`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vGCol;`)
+      .replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( vGCol, opacity );');
+  };
+  return m;
+}
 function foodMaterial(attrName) {
   const m = new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0 });
   m.onBeforeCompile = sh => {
@@ -197,8 +209,8 @@ function setupRound(r) {
     const bg = new THREE.BoxGeometry(s, s, s);
     const cen = new Float32Array(pieces.length * 3); pieces.forEach((p, i) => cen.set([p.cx, p.cy, p.cz], i * 3));
     bg.setAttribute('aObj', new THREE.InstancedBufferAttribute(cen, 3));
-    const im = new THREE.InstancedMesh(bg, foodMaterial('aObj'), pieces.length);
-    im.castShadow = r.idx <= 3; im.receiveShadow = true; im.frustumCulled = false;
+    const im = new THREE.InstancedMesh(bg, grainMaterial(), pieces.length);
+    im.castShadow = r.idx <= 2; im.receiveShadow = r.idx <= 2; im.frustumCulled = false;
     a.mesh = im;
   }
   group.add(a.mesh);
@@ -282,7 +294,7 @@ function renderAt(f) {
         _m.compose(_p, _q, _s); a.mesh.setMatrixAt(a.ids[i], _m);
       }
     } else {
-      const sim = a.sim; sim.stepTo(t);
+      const sim = a.sim; const _t0 = performance.now(); sim.stepTo(t); window.TSIM = performance.now() - _t0;
       if (f !== lastRound) grainLog.push([+t.toFixed(3), sim.impacts, +sim.impactE.toFixed(2)]);
       const { p, e, state } = sim, n = sim.n;
       for (let i = 0; i < n; i++) {
@@ -301,7 +313,7 @@ function renderAt(f) {
   const tgt = new THREE.Vector3(0.05, Math.max(0.25, RY * 0.66), 0.15);
   camera.position.copy(tgt).addScaledVector(CAM_DIR, 9.5 * r.zoom);
   camera.lookAt(tgt.x, tgt.y - 0.25, tgt.z);
-  renderer.render(scene, camera);
+  const _t1 = performance.now(); renderer.render(scene, camera); window.TGL = performance.now() - _t1;
   // HUD
   ctx.drawImage(glCanvas, 0, 0);
   let g = ctx.createLinearGradient(0, 0, 0, 300); g.addColorStop(0, 'rgba(0,0,0,0.45)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, 300);

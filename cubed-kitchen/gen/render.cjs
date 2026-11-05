@@ -31,7 +31,7 @@ async function write(ff, url) { const b = Buffer.from(url.split(',')[1], 'base64
     for (const f of frames.split(',').map(Number)) {
       const t0 = Date.now(); const url = await page.evaluate(f => SCENE.frame(f), f);
       fs.writeFileSync(path.join(job, 'prev', `f${String(f).padStart(4, '0')}.jpg`), Buffer.from(url.split(',')[1], 'base64'));
-      console.log('frame', f, Date.now() - t0, 'ms');
+      console.log('frame', f, Date.now() - t0, 'ms', await page.evaluate(() => JSON.stringify({sim: Math.round(window.TSIM||0), gl: Math.round(window.TGL||0)})));
     }
   } else {
     const main = ffmpeg(path.join(job, 'main.mp4')), hook = ffmpeg(path.join(job, 'hook.mp4'));

@@ -7,9 +7,9 @@ export const DEF = [
   { sets: [4, 3, 3], t: [[0.15, 1.75], [2.0, 3.0], [3.3, 4.6]], end: 5.0, zoom: 1.0, mode: 'rigid' },
   { sets: [17, 16, 17], t: [[5.3, 8.4], [8.9, 11.9], [12.6, 17.0]], end: 18.0, zoom: 0.88, mode: 'rigid' },
   { sets: [33, 34, 33], t: [[18.3, 21.0], [21.5, 23.6], [24.0, 28.6]], end: 29.5, zoom: 0.78, mode: 'grain', vis: 34 },
-  { sets: [84, 83, 83], t: [[29.8, 33.0], [33.4, 36.4], [36.9, 41.4]], end: 42.0, zoom: 0.70, mode: 'grain', vis: 42 },
-  { sets: [167, 166, 167], t: [[42.3, 45.9], [46.3, 49.9], [50.4, 55.9]], end: 56.5, zoom: 0.62, mode: 'grain', vis: 50 },
-  { sets: [334, 333, 333], t: [[56.8, 60.6], [61.1, 64.6], [65.1, 71.2]], end: 76.4, zoom: 0.55, mode: 'grain', vis: 60 },
+  { sets: [84, 83, 83], t: [[29.8, 33.0], [33.4, 36.4], [36.9, 41.4]], end: 42.0, zoom: 0.70, mode: 'grain', vis: 38 },
+  { sets: [167, 166, 167], t: [[42.3, 45.9], [46.3, 49.9], [50.4, 55.9]], end: 56.5, zoom: 0.62, mode: 'grain', vis: 44 },
+  { sets: [334, 333, 333], t: [[56.8, 60.6], [61.1, 64.6], [65.1, 71.2]], end: 76.4, zoom: 0.55, mode: 'grain', vis: 48 },
 ];
 export const TOTAL = 76.4;
 export const HOOK_T0 = 68.6;   // 1 s from the last collapse, when the most cubes are falling

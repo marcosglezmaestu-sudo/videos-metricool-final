@@ -36,7 +36,7 @@ export class GrainSim {
     while (this.next < n && this.release[this.order[this.next]] <= this.t) {
       const i = this.order[this.next++]; state[i] = 1;
       const im = releaseImpulse(this.g[i], this.rnd);
-      v.set(im.v.map(x => x * 0.6), i * 3); w.set(im.w, i * 3);
+      v.set(im.v.map(x => x * 0.35), i * 3); w.set(im.w, i * 3);
     }
     // integrate awake grains
     const G = PHYS.G, ld = 1 - PHYS.linDamp * dt, ad = 1 - PHYS.angDamp * dt, mv = this.maxV;
@@ -52,8 +52,8 @@ export class GrainSim {
       const gy = this.ground(p[o], p[o + 2]) + r;
       if (p[o + 1] < gy) {
         p[o + 1] = gy;
-        if (v[o + 1] < 0) { const vn = -v[o + 1]; if (vn > 0.35) { this.impacts++; this.impactE += vn; } v[o + 1] = vn > 0.25 ? vn * PHYS.restitution : 0; }
-        const fr = 1 - Math.min(1, 9 * PHYS.friction * dt * 2.2); v[o] *= fr; v[o + 2] *= fr;
+        if (v[o + 1] < 0) { const vn = -v[o + 1]; if (vn > 0.35) { this.impacts++; this.impactE += vn; } v[o + 1] = vn > 0.25 ? vn * 0.2 : 0; }
+        const fr = 1 - Math.min(1, 40 * dt); v[o] *= fr; v[o + 2] *= fr;
         w[o] *= 0.82; w[o + 1] *= 0.82; w[o + 2] *= 0.82;
       }
     }
@@ -61,7 +61,7 @@ export class GrainSim {
     const head = this.head, link = this.link; head.fill(-1);
     for (let i = 0; i < n; i++) { const o = i * 3; const k = this.key(p[o], p[o + 1], p[o + 2]); link[i] = head[k]; head[k] = i; }
     // resolve contacts for awake grains
-    const d2 = 4 * r * r, h = this.h, e_ = PHYS.restitution;
+    const d2 = 4 * r * r, h = this.h, e_ = 0.15;
     for (let i = 0; i < n; i++) {
       if (state[i] !== 1) continue; const o = i * 3;
       const x = p[o], y = p[o + 1], z = p[o + 2];
@@ -87,7 +87,7 @@ export class GrainSim {
                 v[o] += jn * nx; v[o + 1] += jn * ny; v[o + 2] += jn * nz;
                 if (mobile) { v[q] -= jn * nx; v[q + 1] -= jn * ny; v[q + 2] -= jn * nz; }
                 // tangential friction
-                const tx = rvx - vn * nx, ty = rvy - vn * ny, tz = rvz - vn * nz; const f = PHYS.friction * 0.25 * share;
+                const tx = rvx - vn * nx, ty = rvy - vn * ny, tz = rvz - vn * nz; const f = 0.55 * share;
                 v[o] -= tx * f; v[o + 1] -= ty * f; v[o + 2] -= tz * f;
                 if (mobile) { v[q] += tx * f; v[q + 1] += ty * f; v[q + 2] += tz * f; }
               }
