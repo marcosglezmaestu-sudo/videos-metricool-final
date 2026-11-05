@@ -15,7 +15,7 @@ echo "== audio"; python3 audio.py "$JOB"
 echo "== assemble"
 ffmpeg -y -v error -i "$JOB/hook.mp4" -i "$JOB/main.mp4" -i "$JOB/final.wav" \
   -filter_complex "[0:v][1:v]concat=n=2:v=1:a=0,scale=1080:1920:flags=lanczos,format=yuv420p[v]" \
-  -map "[v]" -map 2:a -c:v libx264 -preset veryfast -crf 18 -af "loudnorm=I=-14:TP=-1.5:LRA=11" -c:a aac -b:a 192k -ar 48000 -shortest -movflags +faststart "$JOB/final.mp4"
+  -map "[v]" -map 2:a -c:v libx264 -preset veryfast -crf 18 -af "loudnorm=I=-17:TP=-2:LRA=11" -c:a aac -b:a 192k -ar 48000 -shortest -movflags +faststart "$JOB/final.mp4"
 DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$JOB/final.mp4")
 python3 - "$JOB" "$DUR" <<'P'
 import json, sys

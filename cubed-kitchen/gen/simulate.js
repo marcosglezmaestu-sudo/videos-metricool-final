@@ -6,7 +6,7 @@ import { buildRounds, buildPieces, setInfo, releaseImpulse, PHYS, BOARD, FPS, mu
 
 const food = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const outDir = process.argv[3]; fs.mkdirSync(outDir, { recursive: true });
-const SUB = 10;
+const SUB = 16;   // 480 Hz: needed with real gravity
 await RAPIER.init();
 const rounds = buildRounds(food);
 const meta = [];
@@ -18,8 +18,8 @@ for (const r of rounds) {
   world.timestep = 1 / (FPS * SUB);
   world.integrationParameters.numSolverIterations = 6;
   const bw = (BOARD.x1 - BOARD.x0) / 2, bd = (BOARD.z1 - BOARD.z0) / 2;
-  world.createCollider(RAPIER.ColliderDesc.cuboid(bw, 0.1, bd).setTranslation((BOARD.x0 + BOARD.x1) / 2, BOARD.top - 0.1, (BOARD.z0 + BOARD.z1) / 2).setFriction(0.45).setRestitution(PHYS.restitution));
-  world.createCollider(RAPIER.ColliderDesc.cuboid(14, 0.06, 8).setTranslation(0, BOARD.counter - 0.06, -0.5).setFriction(0.5).setRestitution(0.25));
+  world.createCollider(RAPIER.ColliderDesc.cuboid(bw, 0.1, bd).setTranslation((BOARD.x0 + BOARD.x1) / 2, BOARD.top - 0.1, (BOARD.z0 + BOARD.z1) / 2).setFriction(0.55).setRestitution(PHYS.restitution));
+  world.createCollider(RAPIER.ColliderDesc.cuboid(14, 0.06, 8).setTranslation(0, BOARD.counter - 0.06, -0.5).setFriction(0.55).setRestitution(PHYS.restitution));
   const RY = food.R[1];
   const bodies = pieces.map(p => {
     const b = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(p.cx, p.cy + RY, p.cz).setLinearDamping(PHYS.linDamp).setAngularDamping(PHYS.angDamp));

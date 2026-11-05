@@ -107,17 +107,22 @@ void main(){
     float s = ax==0 ? q.x + fR.x : (ax==1 ? fR.y - q.y : fR.z - q.z);
     float id = floor(s/cell + 0.5);
     if(id < 1.0 || id > uDone[ax]) continue;
-    float dist = abs(s - id*cell), aa = fwidth(s), w = min(0.0045, cell*0.2);
+    if(ax == 2 && abs(q.z - uClipZ) < 2e-3) continue;   // the clip face itself is not a line
+    float dist = abs(s - id*cell), aa = fwidth(s), w = min(0.003, cell*0.15);
     float l = (aa > cell*0.6) ? 0.2 : (1.0 - smoothstep(w, w + aa*1.2, dist)) * mix(1.0, 0.35, smoothstep(cell*0.15, cell*0.6, aa));
     line = max(line, l);
   }
-  alb = mix(alb, alb*0.22, clamp(line,0.0,1.0)*0.85);
+  alb = mix(alb, alb*0.4, clamp(line,0.0,1.0)*0.75);
+  bool cutFace = abs(q.z - uClipZ) < 1e-3 || fDepth(q) < 0.995;
+  if(!cutFace) n = foodBumpN(q, n);
   vec3 wn = normalize(uRot0*n.x + uRot1*n.y + uRot2*n.z);
   vec3 wd = normalize(vWorld - cameraPosition); vec3 wp = cameraPosition + wd*t0;
   vec3 L = normalize(uL); float dif = max(dot(wn,L),0.0); vec3 Hh = normalize(L - wd);
   float spec = pow(max(dot(wn,Hh),0.0), 70.0) * (1.0-rough) * 0.5;
   vec3 lin = pow(alb, vec3(2.2));
-  vec3 col = lin*(mix(vec3(0.10,0.085,0.07), vec3(0.40,0.37,0.33), 0.5+0.5*wn.y) + dif*vec3(1.45,1.36,1.22)) + spec;
+  float wrap = max(dot(wn,L)*0.5 + 0.5, 0.0);
+  float ao = mix(0.55, 1.0, smoothstep(0.0, 0.45*fR.y, q.y + fR.y));
+  vec3 col = lin*(mix(vec3(0.10,0.085,0.07), vec3(0.40,0.37,0.33), 0.5+0.5*wn.y)*ao + dif*vec3(1.45,1.36,1.22) + wrap*wrap*vec3(0.10,0.12,0.06)) + spec;
   fragOut = vec4(pow(col, vec3(1.0/2.2)), 1.0);
   vec4 clip = projectionMatrix*viewMatrix*vec4(wp,1.0); gl_FragDepth = clamp(clip.z/clip.w*0.5+0.5, 0.0, 1.0);
 }`;
@@ -295,11 +300,10 @@ function renderAt(f) {
       }
     } else {
       const sim = a.sim; const _t0 = performance.now(); sim.stepTo(t); window.TSIM = performance.now() - _t0;
-      if (f !== lastRound) grainLog.push([+t.toFixed(3), sim.impacts, +sim.impactE.toFixed(2)]);
-      const { p, e, state } = sim, n = sim.n;
+      const { p, q, state } = sim, n = sim.n;
       for (let i = 0; i < n; i++) {
         if (state[i] === 0) { _m.makeScale(0, 0, 0); a.mesh.setMatrixAt(i, _m); continue; }
-        released++; const o = i * 3; _p.set(p[o], p[o + 1], p[o + 2]); _q.setFromEuler(_e.set(e[o], e[o + 1], e[o + 2]));
+        released++; const o = i * 3; _p.set(p[o], p[o + 1], p[o + 2]); _q.set(q[i * 4], q[i * 4 + 1], q[i * 4 + 2], q[i * 4 + 3]);
         _m.compose(_p, _q, _s); a.mesh.setMatrixAt(i, _m);
       }
       a.mesh.instanceMatrix.needsUpdate = true;

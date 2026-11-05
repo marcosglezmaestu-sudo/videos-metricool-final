@@ -3,8 +3,8 @@
 // original position of a point inside the food, so every piece / grain keeps its real look.
 
 export const SHAPES = { ellipsoid: 0, cylinder: 1, box: 2 };
-export const SKIN_PAT = { solid: 0, stripes: 1, speckle: 2, dimples: 3, net: 4, spots: 5, blush: 6 };
-export const CORE = { none: 0, segments: 1, rings: 2, seedring: 3, pit: 4, core_star: 5, seeds: 6, layers: 7, holes: 8, marble: 9, cavity: 10 };
+export const SKIN_PAT = { solid: 0, stripes: 1, speckle: 2, dimples: 3, net: 4, spots: 5, blush: 6, veins: 7 };
+export const CORE = { none: 0, segments: 1, rings: 2, seedring: 3, pit: 4, core_star: 5, seeds: 6, layers: 7, holes: 8, marble: 9, cavity: 10, leaves: 11 };
 
 export function shapeId(f) { return SHAPES[f.shape] ?? 0; }
 
@@ -76,7 +76,7 @@ uniform float fSkinT; uniform vec3 fSkinA; uniform vec3 fSkinB; uniform int fSki
 uniform float fUnderT; uniform vec3 fUnder;
 uniform vec3 fFleshA; uniform vec3 fFleshB; uniform float fFleshScale;
 uniform int fCore; uniform vec3 fCoreA; uniform vec3 fCoreB; uniform vec4 fCoreP; uniform int fAxis;
-uniform int fLayN; uniform float fLayY[8]; uniform vec3 fLayC[8];
+uniform int fLayN; uniform float fLayY[8]; uniform vec3 fLayC[8]; uniform float fBump;
 float fh3(vec3 p){ p = fract(p*0.3183099+vec3(.1,.2,.3)); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
 float fvn(vec3 x){ vec3 i=floor(x); vec3 f=fract(x); f=f*f*(3.0-2.0*f);
   return mix(mix(mix(fh3(i),fh3(i+vec3(1,0,0)),f.x),mix(fh3(i+vec3(0,1,0)),fh3(i+vec3(1,1,0)),f.x),f.y),
@@ -111,6 +111,13 @@ vec3 foodColor(vec3 q, out float rough){
     else if(fSkinPat==4){ float w = abs(fvn(q*fSkinScale*0.6)-0.5); c = mix(fSkinB, fSkinA, smoothstep(0.02,0.07,w)); }
     else if(fSkinPat==5){ c = mix(fSkinA, fSkinB, step(0.72, fvn(q*fSkinScale*0.35))); }
     else if(fSkinPat==6){ c = mix(fSkinA, fSkinB, smoothstep(0.35,0.75, fvn(q*1.6) + 0.25*q.y/fR.y)); }
+    else if(fSkinPat==7){ // leaf veins + crinkles
+      float v1 = 1.0 - smoothstep(0.0, 0.022, abs(fvn(q*fSkinScale*0.22) - 0.5));
+      float v2 = 1.0 - smoothstep(0.0, 0.015, abs(fvn(q*fSkinScale*0.6 + 3.1) - 0.5));
+      c = mix(fSkinA, fSkinB, clamp(v1*0.32 + v2*0.18, 0.0, 1.0));
+      c = mix(c, fSkinB, smoothstep(-0.2, 0.9, -q.y/fR.y)*0.45);   // paler towards the stem
+      c *= 0.86 + 0.2*fvn(q*fSkinScale*1.3);
+    }
     return c * (0.9 + 0.15*n);
   }
   if(d > 1.0 - fSkinT - fUnderT) return fUnder * (0.92 + 0.12*fvn(q*30.0));
@@ -165,10 +172,33 @@ vec3 foodColor(vec3 q, out float rough){
   } else if(fCore==9){ // marble
     float m = sin(q.x*fCoreP.x + 4.0*fvn(q*2.0) + 2.0*fvn(q*6.0));
     c = mix(fFleshA, fFleshB, smoothstep(-0.3, 0.3, m));
+  } else if(fCore==11){ // lettuce: concentric wavy leaves, white ribs, central stalk
+    float an = atan(q.z, q.x);
+    float wv = d + 0.045*sin(an*6.0 + q.y*7.0) + 0.05*(fvn(q*4.0) - 0.5);
+    float L = fract(wv*fCoreP.x), li = floor(wv*fCoreP.x);
+    c = mix(fCoreB, fFleshA, smoothstep(0.15, 1.0, d));
+    c *= 0.9 + 0.18*fh3(vec3(li, 1.0, 2.0));
+    c = mix(c, fFleshB, smoothstep(0.7, 1.0, d)*0.4);
+    float rib = 1.0 - smoothstep(0.0, 0.05, abs(sin(an*3.0 + q.y*2.5 + 2.0*fvn(q*1.5))));
+    c = mix(c, fCoreA, rib*0.3);
+    c = mix(c*0.72, c, smoothstep(0.02, 0.07, L));                        // thin air gap between leaves
+    c = mix(c, vec3(0.95,0.98,0.86), (1.0 - smoothstep(0.06, 0.1, L))*step(0.06, L)*0.2);  // leaf edge
+    if(length(q.xz) < fCoreP.y && q.y < 0.15*fR.y) c = fCoreA*(0.9 + 0.1*fvn(q*30.0));    // stalk
   } else if(fCore==10){ // hollow-ish centre with seeds (pumpkin, pepper, melon)
     if(d < fCoreP.x){ c = fCoreA * (0.8 + 0.3*fvn(q*14.0)); if(fvn(q*fCoreP.y) > 0.78) c = fCoreB; }
   }
   return c;
+}
+// surface relief (crinkles / pores) as a normal perturbation, food space
+vec3 foodBumpN(vec3 q, vec3 n){
+  if(fBump <= 0.0) return n;
+  float e = 0.004;
+  float f0 = fvn(q*16.0) + 0.5*fvn(q*38.0);
+  vec3 g = vec3(fvn((q+vec3(e,0,0))*16.0) + 0.5*fvn((q+vec3(e,0,0))*38.0) - f0,
+                fvn((q+vec3(0,e,0))*16.0) + 0.5*fvn((q+vec3(0,e,0))*38.0) - f0,
+                fvn((q+vec3(0,0,e))*16.0) + 0.5*fvn((q+vec3(0,0,e))*38.0) - f0) / e;
+  g -= dot(g, n)*n;
+  return normalize(n - g*fBump*0.012);
 }
 // ray / food intersection in food space. Returns entry & exit; nOut = entry normal (food space)
 bool foodRay(vec3 ro, vec3 rd, out float t0, out float t1, out vec3 nOut){
@@ -215,6 +245,6 @@ export function foodUniforms(f, THREE) {
     fFleshA: { value: v(f.flesh.color) }, fFleshB: { value: v(f.flesh.color2 || f.flesh.color) }, fFleshScale: { value: f.flesh.scale || 8 },
     fCore: { value: CORE[core.type || 'none'] ?? 0 }, fCoreA: { value: v(core.colorA) }, fCoreB: { value: v(core.colorB) },
     fCoreP: { value: new THREE.Vector4(...(core.p || [0, 0, 0, 0])) }, fAxis: { value: ({ x: 0, y: 1, z: 2 })[core.axis || 'z'] },
-    fLayN: { value: lay.length }, fLayY: { value: layY }, fLayC: { value: layC },
+    fLayN: { value: lay.length }, fLayY: { value: layY }, fLayC: { value: layC }, fBump: { value: f.bump ?? 0.35 },
   };
 }

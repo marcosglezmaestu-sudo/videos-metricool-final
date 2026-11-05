@@ -75,13 +75,16 @@ export function buildPieces(food, r) {
 }
 
 // initial velocity / spin given by the blade when a piece is freed (approved "light cubes" look)
+// Real-world physics. Scale: the food is ~15 cm wide (R = 1 unit = 7.5 cm) -> g = 9.81 m/s^2 = 131 units/s^2.
+// The blade only nudges the freed slab a little (a few cm/s); everything else is gravity, contact and friction.
 export function releaseImpulse(p, rnd) {
   const hy = p.hy;
   return {
-    v: [(rnd() - .5) * 0.9 + p.cx * 0.55, rnd() * 0.25, 0.25 + 0.95 * hy + rnd() * 0.35],
-    w: [2 + 5 * hy * rnd(), (rnd() - .5) * 4, (rnd() - .5) * 6],
+    v: [(rnd() - .5) * 0.15, 0, 0.15 + 0.45 * hy + rnd() * 0.1],
+    w: [0.5 + 1.5 * hy * rnd(), (rnd() - .5) * 0.6, (rnd() - .5) * 0.8],
   };
 }
-export const PHYS = { G: 26, density: 0.4, friction: 0.42, restitution: 0.3, linDamp: 0.04, angDamp: 0.25 };
+// cut fruit / veg: wet surfaces -> high friction, almost no bounce; air drag negligible at this size
+export const PHYS = { G: 131, density: 0.6, friction: 0.6, restitution: 0.06, linDamp: 0.0, angDamp: 0.05 };
 // cutting board (group space) and countertop below it
 export const BOARD = { x0: -2.5, x1: 2.5, z0: -2.15, z1: 3.05, top: 0, counter: -0.2 };

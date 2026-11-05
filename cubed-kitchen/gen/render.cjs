@@ -16,7 +16,7 @@ async function write(ff, url) { const b = Buffer.from(url.split(',')[1], 'base64
 (async () => {
   const [mode, job, frames] = process.argv.slice(2);
   const jobRel = path.relative(ROOT, path.resolve(job));
-  const browser = await puppeteer.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', headless: 'new',
+  const browser = await puppeteer.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', headless: 'new', protocolTimeout: 1800000,
     args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage();
   page.on('pageerror', e => console.log('[err]', e.message));

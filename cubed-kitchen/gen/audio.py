@@ -43,25 +43,7 @@ for e in log['cuts']:
         s = pick(CH)
         if dt < 0.06: k = int(max(dt * 2.2, 0.03) * SR); s = s[:k] * np.linspace(1, 0, len(s[:k]))
         add(s, e['t'] - 0.06, g, pan)
-# rigid rounds: one click per real collision
-for rd in log['rigid']:
-    imp = rd['impacts']
-    if not imp: continue
-    ref = np.percentile([m for _, m in imp], 95)
-    for t, m in imp:
-        gg = min(1.0, (m / ref) ** 0.5)
-        if gg < 0.08: continue
-        add(pick(TK), t, gg * 0.5, rng.uniform(-.8, .8))
-        if rd['round'] == 0 and gg > 0.4: add(pick(CK), t, gg * 0.35, rng.uniform(-.5, .5))
-# grain rounds: clicks following the real impacts + sand hiss
-gl = np.array(log['grains']) if log['grains'] else np.zeros((0, 3))
-if len(gl):
-    cmax = max(1.0, np.percentile(gl[:, 1], 98))
-    for t, c, en in gl:
-        k = int(min(28, c / cmax * 28))
-        for _ in range(k): add(pick(TK), t + rng.uniform(0, 1 / 30), rng.uniform(.15, .45), rng.uniform(-.85, .85))
-    n = N; dens = np.interp(np.arange(n) / SR, gl[:, 0], np.clip(gl[:, 1] / cmax, 0, 1))
-    hiss = filt(rng.standard_normal(n), 'band', [1800, 11000]) * dens ** 0.7 * 0.22
+# falling cubes: silent on purpose (only the knife is heard)
 mix = np.stack([L, R], 1)[:int(TOTAL * SR)]
 mix = np.stack([filt(mix[:, 0], 'high', 150), filt(mix[:, 1], 'high', 150)], 1)
 # leveler (steady loudness like the reference)
