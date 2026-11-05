@@ -1,0 +1,10 @@
+{
+  "name": "cubed-kitchen-gen",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "^0.21.0",
+    "puppeteer-core": "^24.0.0",
+    "three": "^0.181.0"
+  }
+}
