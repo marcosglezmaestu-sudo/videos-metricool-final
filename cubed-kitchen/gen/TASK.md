@@ -1,6 +1,6 @@
 # Tarea programada — Cubed Kitchen (1 vídeo por franja)
 
-Variables que da el aviso programado: **FRANJA** = 13, 17 o 20 (hora de publicación, Europe/Madrid).
+Variables que da el aviso programado: **FRANJA** = 10, 14 o 19 (hora de publicación, Europe/Madrid).
 Responde siempre en español de España. Trabaja solo; no preguntes nada.
 
 ## 0. Preparación
