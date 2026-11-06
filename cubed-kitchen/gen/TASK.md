@@ -9,7 +9,7 @@ Responde siempre en español de España. Trabaja solo; no preguntes nada.
 - `git config user.email marcos.glezmaestu@gmail.com && git config user.name Marcos`.
 - HOY = fecha de Madrid (`TZ=Europe/Madrid date +%F`). Si `../history.json` ya tiene un vídeo con `date` = HOY y `slot` = FRANJA, termina sin hacer nada.
 
-## 1. Generar el vídeo (≈1 h 45 min)
+## 1. Generar el vídeo (≈2 h)
 - `nohup ./make_video.sh ~/job > ~/job.log 2>&1 &` (elige sola una comida al azar que no esté en el historial).
 - Espera en tramos de ≤ 10 min con `sleep 540; tail -3 ~/job.log; grep -E '^frame' ~/job/render.log | tail -1`.
   **No** esperes con `pgrep -f make_video` (se encuentra a sí mismo).

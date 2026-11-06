@@ -19,8 +19,8 @@ export class GrainSim {
     grains.forEach((q, i) => { this.p.set([q.cx, q.cy + RY, q.cz], i * 3); this.release[i] = q.release; });
     this.order = grains.map((_, i) => i).sort((a, b) => this.release[a] - this.release[b]);
     this.next = 0; this.t = r.t[2][0] - 0.01; this.dtFrame = 1 / fps;
-    this.h = this.r * 2.05; this.HS = 1 << 19;
-    this.head = new Int32Array(this.HS); this.link = new Int32Array(n);
+    this.h = this.r * 2.05; this.HS = 1 << 18;
+    this.head = new Int32Array(this.HS); this.stamp = new Int32Array(this.HS); this.gen = 0; this.link = new Int32Array(n);
     this.awake = 0;
   }
   ground(x, z) { return (x > BOARD.x0 && x < BOARD.x1 && z > BOARD.z0 && z < BOARD.z1) ? BOARD.top : BOARD.counter; }
@@ -30,7 +30,7 @@ export class GrainSim {
       const span = Math.min(this.dtFrame, t - this.t);
       // fastest grain after one more step of free fall
       const vmax = this.maxSpeed() + PHYS.G * span * 0.25 + 1;
-      const sub = Math.max(6, Math.min(80, Math.ceil(vmax * span / (0.4 * this.r))));
+      const sub = Math.max(4, Math.min(48, Math.ceil(vmax * span / (0.8 * this.r))));
       const dt = span / sub;
       for (let k = 0; k < sub; k++) { this.substep(dt); this.t += dt; }
     }
@@ -39,7 +39,8 @@ export class GrainSim {
     const { p, v, q, w, state, n, r } = this;
     while (this.next < n && this.release[this.order[this.next]] <= this.t) {
       const i = this.order[this.next++]; state[i] = 1;
-      const im = releaseImpulse(this.g[i], this.rnd); v.set(im.v, i * 3); w.set(im.w, i * 3);
+      const im = releaseImpulse(this.g[i], this.rnd); const R_ = this.rnd;
+      v.set([im.v[0] + (R_() - .5) * 0.5, im.v[1], im.v[2] + (R_() - .5) * 0.5], i * 3); w.set([im.w[0] + (R_() - .5) * 4, im.w[1], im.w[2] + (R_() - .5) * 4], i * 3);
     }
     const G = PHYS.G, mu = 0.85, e = PHYS.restitution;
     // integrate
@@ -55,8 +56,8 @@ export class GrainSim {
       const l = Math.hypot(q[a], q[a + 1], q[a + 2], q[a + 3]); q[a] /= l; q[a + 1] /= l; q[a + 2] /= l; q[a + 3] /= l;
     }
     // contacts: grain-grain and grain-ground, impulse model with Coulomb friction and rolling
-    const head = this.head, link = this.link; head.fill(-1); const h = this.h, HS = this.HS - 1;
-    for (let i = 0; i < n; i++) { const o = i * 3; const k = ((Math.floor(p[o] / h) * 73856093) ^ (Math.floor(p[o + 1] / h) * 19349663) ^ (Math.floor(p[o + 2] / h) * 83492791)) & HS; link[i] = head[k]; head[k] = i; }
+    const head = this.head, stamp = this.stamp, link = this.link, gen = ++this.gen; const h = this.h, HS = this.HS - 1;
+    for (let i = 0; i < n; i++) { const o = i * 3; const k = ((Math.floor(p[o] / h) * 73856093) ^ (Math.floor(p[o + 1] / h) * 19349663) ^ (Math.floor(p[o + 2] / h) * 83492791)) & HS; if (stamp[k] !== gen) { stamp[k] = gen; head[k] = -1; } link[i] = head[k]; head[k] = i; }
     const d2 = 4 * r * r, kRot = 2.5 / r;  // solid sphere: dw = (5/2) (r n x J) / (m r^2)
     const contact = (i, j, nx, ny, nz, pen, other) => {
       const o = i * 3, mob = other >= 0 && state[other] === 1, s = mob ? 0.5 : 1;
@@ -82,33 +83,39 @@ export class GrainSim {
         w[c] += kRot * (-ny * jz + nz * jy); w[c + 1] += kRot * (-nz * jx + nx * jz); w[c + 2] += kRot * (-nx * jy + ny * jx); }
       else if (other >= 0 && state[other] === 2 && -vn > 3) { state[other] = 1; this.calm[other] = 0; }
     };
-    for (let it = 0; it < 3; it++)
+    for (let it = 0; it < 2; it++)
     for (let i = 0; i < n; i++) {
       if (state[i] !== 1) continue; const o = i * 3;
       const gy = this.ground(p[o], p[o + 2]) + r;
-      let touching = false;
-      if (p[o + 1] < gy) { contact(i, -1, 0, 1, 0, gy - p[o + 1], -1); touching = true; }
+      let grounded = false, sup = 0, vert = 0;
+      if (p[o + 1] < gy + 1e-4) { if (p[o + 1] < gy) contact(i, -1, 0, 1, 0, gy - p[o + 1], -1); grounded = true; }
       const ix = Math.floor(p[o] / h), iy = Math.floor(p[o + 1] / h), iz = Math.floor(p[o + 2] / h);
       for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let c = -1; c <= 1; c++) {
-        let j = head[(((ix + a) * 73856093) ^ ((iy + b) * 19349663) ^ ((iz + c) * 83492791)) & HS];
+        const kk = (((ix + a) * 73856093) ^ ((iy + b) * 19349663) ^ ((iz + c) * 83492791)) & HS; let j = stamp[kk] === gen ? head[kk] : -1;
         while (j !== -1) {
           if (j !== i) {
             const k = j * 3, dx = p[o] - p[k], dy = p[o + 1] - p[k + 1], dz = p[o + 2] - p[k + 2], dd = dx * dx + dy * dy + dz * dz;
-            if (dd < d2 && dd > 1e-12) { const dl = Math.sqrt(dd); contact(i, j, dx / dl, dy / dl, dz / dl, 2 * r - dl, j); if (dy / dl > 0.3) touching = true; }
+            if (dd < d2 && dd > 1e-12) { const dl = Math.sqrt(dd); contact(i, j, dx / dl, dy / dl, dz / dl, 2 * r - dl, j); if (dy / dl > 0.3) { sup++; if (dy / dl > 0.97) vert++; } }
           }
           j = link[j];
         }
       }
-      // cubes do not roll like balls: flat faces stop the rotation almost at once (strong rolling
-      // resistance) and the contact grips while slow (static friction) -> real angle of repose ~35-40 deg
-      if (touching) {
+      // A grain only rests if it is on the board or sits on 3+ grains below (a real support base).
+      // Balanced on top of just one or two (a 'mini tower'), the slightest disturbance topples it.
+      // tower = perched straight on top of another grain with no other base
+      const tower = !grounded && vert > 0 && sup < 3;
+      const stable = !tower && (grounded || sup >= 1);
+      if (stable) {
+        // cubes do not roll like balls: flat faces stop rotation fast and grip while slow
         const k = Math.max(0, 1 - 90 * dt); w[o] *= k; w[o + 1] *= k; w[o + 2] *= k;
         const hv = Math.hypot(v[o], v[o + 2]);
         if (hv < 0.6 && Math.abs(v[o + 1]) < 0.6) { const kk = Math.max(0, 1 - 120 * dt); v[o] *= kk; v[o + 2] *= kk; }
+      } else if (tower) {
+        const R_ = this.rnd; v[o] += (R_() - .5) * 60 * dt; v[o + 2] += (R_() - .5) * 60 * dt;
       }
-      if (it < 2) continue;
+      if (it < 1) continue;
       const sp = Math.hypot(v[o], v[o + 1], v[o + 2]);
-      if (touching && sp < 0.25 && Math.hypot(w[o], w[o + 1], w[o + 2]) < 1.5) { if (++this.calm[i] > 6) { state[i] = 2; v[o] = v[o + 1] = v[o + 2] = 0; w[o] = w[o + 1] = w[o + 2] = 0; } }
+      if (stable && sp < 0.25 && Math.hypot(w[o], w[o + 1], w[o + 2]) < 1.5) { if (++this.calm[i] > 6) { state[i] = 2; v[o] = v[o + 1] = v[o + 2] = 0; w[o] = w[o + 1] = w[o + 2] = 0; } }
       else this.calm[i] = 0;
     }
   }

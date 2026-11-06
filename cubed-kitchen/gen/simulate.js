@@ -43,6 +43,7 @@ for (const r of rounds) {
         const idx = order[next++]; const b = bodies[idx];
         b.setBodyType(RAPIER.RigidBodyType.Dynamic, true);
         const im = releaseImpulse(pieces[idx], rnd);
+        im.v[0] += (rnd() - .5) * 0.5; im.v[2] += (rnd() - .5) * 0.5; im.w[0] += (rnd() - .5) * 4; im.w[2] += (rnd() - .5) * 4;
         b.setLinvel({ x: im.v[0], y: im.v[1], z: im.v[2] }, true); b.setAngvel({ x: im.w[0], y: im.w[1], z: im.w[2] }, true);
       }
       world.step(eq);

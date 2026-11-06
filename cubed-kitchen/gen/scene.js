@@ -148,9 +148,11 @@ function grainMaterial() {
   m.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, FU);
     sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>\nattribute vec3 aObj;\nvarying vec3 vGCol;\n${FOOD_GLSL}`)
-      .replace('#include <begin_vertex>', `#include <begin_vertex>\nfloat gr; vGCol = pow(foodColor(aObj, gr), vec3(2.2));`);
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\nfloat gr; vec3 fc = foodColor(aObj, gr); fc = mix(fc, vec3(dot(fc, vec3(0.333))), 0.0) * 1.05; vGCol = pow(fc, vec3(2.2));`);
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\nvarying vec3 vGCol;`)
-      .replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( vGCol, opacity );');
+      .replace('vec4 diffuseColor = vec4( diffuse, opacity );', 'vec4 diffuseColor = vec4( vGCol, opacity );')
+      // fill light: real kitchens bounce light everywhere, a cube side in shadow is never black
+      .replace('vec3 totalEmissiveRadiance = emissive;', 'vec3 totalEmissiveRadiance = emissive + vGCol * 0.28;');
   };
   return m;
 }

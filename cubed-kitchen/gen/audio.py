@@ -15,16 +15,22 @@ def add(sig, t, g=1.0, pan=0.0):
     L[i:i + len(sig)] += sig * g * np.cos((pan + 1) * np.pi / 4) * 1.41
     R[i:i + len(sig)] += sig * g * np.sin((pan + 1) * np.pi / 4) * 1.41
 def mk_chop():
-    n = int(0.25 * SR); t = np.arange(n) / SR; crack = np.zeros(n)
-    for p in rng.integers(0, int(0.06 * SR), 50):
-        crack[p:p + 200] += rng.standard_normal(200) * np.exp(-np.arange(200) / (SR * 0.0009)) * rng.uniform(.2, 1)
-    x = filt(crack, 'band', [1500, 8000]) * 0.7 + filt(rng.standard_normal(n), 'band', [250, 1400]) * env(n, 0.004, 0.045) * 0.8
-    off = int(rng.uniform(0.05, 0.07) * SR)
-    x[off:] += (filt(rng.standard_normal(n), 'band', [900, 3200]) * env(n, 0.0004, 0.010) * 1.4)[:n - off]
-    return x
+    # smooth knife: soft blade swish through the food + muted wooden "tok" (no harsh crackle)
+    n = int(0.26 * SR); t = np.arange(n) / SR
+    sw_len = int(rng.uniform(0.09, 0.12) * SR)
+    swish = filt(rng.standard_normal(sw_len), 'band', [900, 4200]) * np.sin(np.linspace(0, np.pi, sw_len)) ** 2 * 0.32
+    body = filt(rng.standard_normal(n), 'band', [180, 900]) * env(n, 0.003, 0.028) * 0.9
+    soft = filt(rng.standard_normal(n), 'band', [1500, 3500]) * env(n, 0.002, 0.008) * 0.18
+    x = np.zeros(n); x[:sw_len] += swish
+    off = sw_len - int(0.012 * SR)
+    x[off:] += (body + soft)[:n - off]
+    x = filt(x, 'low', 6000)
+    return x * np.hanning(n * 2)[n:] ** 0.15
 def mk_slice():
-    n = int(0.2 * SR)
-    return filt(rng.standard_normal(n), 'band', [2500, 9000]) * np.sin(np.linspace(0, np.pi, n)) ** 1.5 * 0.55 + filt(rng.standard_normal(n), 'band', [300, 1500]) * env(n, 0.01, 0.05) * 0.5
+    # horizontal pass: a long, gentle "shhhh" of the blade sliding through
+    n = int(0.24 * SR)
+    sh = filt(rng.standard_normal(n), 'band', [700, 3800]) * np.sin(np.linspace(0, np.pi, n)) ** 2 * 0.4
+    return filt(sh, 'low', 5500)
 def mk_tick():
     n = int(0.04 * SR); t = np.arange(n) / SR; f = rng.uniform(2200, 6500)
     return (filt(rng.standard_normal(n), 'band', [f * 0.6, min(f * 1.7, 20000)]) * env(n, 0.0002, 0.003)
@@ -38,11 +44,13 @@ pick = lambda a: a[rng.integers(len(a))]
 for e in log['cuts']:
     dt = e['dt']; g = float(np.clip((dt / 0.25) ** 0.6, 0.12, 1.0)); pan = rng.uniform(-.2, .2)
     if e['set'] == 1:
-        s = pick(SL); s = s[:int(max(dt * 2.5, 0.04) * SR)] if dt < 0.06 else s; add(s, e['t'] - 0.08, g * 0.9, pan)
+        s = pick(SL)
+        if dt < 0.06: k = int(max(dt * 2.5, 0.05) * SR); s = s[:k] * np.hanning(2 * k)[k:]
+        add(s, e['t'] - 0.1, g * 0.9, pan)
     else:
         s = pick(CH)
-        if dt < 0.06: k = int(max(dt * 2.2, 0.03) * SR); s = s[:k] * np.linspace(1, 0, len(s[:k]))
-        add(s, e['t'] - 0.06, g, pan)
+        if dt < 0.06: k = int(max(dt * 2.2, 0.05) * SR); s = s[:k] * np.hanning(2 * len(s[:k]))[len(s[:k]):]
+        add(s, e['t'] - 0.1, g, pan)
 # falling cubes: silent on purpose (only the knife is heard)
 mix = np.stack([L, R], 1)[:int(TOTAL * SR)]
 mix = np.stack([filt(mix[:, 0], 'high', 150), filt(mix[:, 1], 'high', 150)], 1)
@@ -52,7 +60,7 @@ rms = np.sqrt((mono[:nw * win].reshape(nw, win) ** 2).mean(1)) + 1e-6
 k = 7; sm = np.convolve(np.pad(rms, (k, k), mode='edge'), np.ones(2 * k + 1) / (2 * k + 1), mode='valid')
 tg = np.percentile(sm, 70); gain = np.clip(tg / sm, 0.5, 2.0); gain[sm < tg * 0.02] = 1.0
 gs = np.repeat(gain, win); gs = np.concatenate([gs, np.full(len(mono) - len(gs), gs[-1])]); gs = np.convolve(gs, np.ones(win) / win, mode='same')
-mix = mix * gs[:, None]; mix = np.tanh(mix / np.abs(mix).max() * 1.8) / np.tanh(1.8) * 0.92
+mix = mix * gs[:, None]; mix = np.tanh(mix / np.abs(mix).max() * 1.2) / np.tanh(1.2) * 0.9
 h0, hl = log['hook']; hook = mix[int(h0 * SR):int((h0 + hl) * SR)].copy()
 f = int(0.01 * SR); hook[-f:] *= np.linspace(1, 0.6, f)[:, None]
 final = np.concatenate([hook, mix]); final[-int(0.1 * SR):] *= np.linspace(1, 0, int(0.1 * SR))[:, None]

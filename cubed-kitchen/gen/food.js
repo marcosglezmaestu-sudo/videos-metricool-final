@@ -114,7 +114,7 @@ vec3 foodColor(vec3 q, out float rough){
     else if(fSkinPat==7){ // leaf veins + crinkles
       float v1 = 1.0 - smoothstep(0.0, 0.022, abs(fvn(q*fSkinScale*0.22) - 0.5));
       float v2 = 1.0 - smoothstep(0.0, 0.015, abs(fvn(q*fSkinScale*0.6 + 3.1) - 0.5));
-      c = mix(fSkinA, fSkinB, clamp(v1*0.32 + v2*0.18, 0.0, 1.0));
+      c = mix(fSkinA, fSkinB, clamp(v1*0.1 + v2*0.06, 0.0, 1.0));
       c = mix(c, fSkinB, smoothstep(-0.2, 0.9, -q.y/fR.y)*0.45);   // paler towards the stem
       c *= 0.86 + 0.2*fvn(q*fSkinScale*1.3);
     }
