@@ -181,8 +181,8 @@ vec3 foodColor(vec3 q, out float rough){
     c = mix(c, fFleshB, smoothstep(0.7, 1.0, d)*0.4);
     float rib = 1.0 - smoothstep(0.0, 0.05, abs(sin(an*3.0 + q.y*2.5 + 2.0*fvn(q*1.5))));
     c = mix(c, fCoreA, rib*0.3);
-    c = mix(c*0.72, c, smoothstep(0.02, 0.07, L));                        // thin air gap between leaves
-    c = mix(c, vec3(0.95,0.98,0.86), (1.0 - smoothstep(0.06, 0.1, L))*step(0.06, L)*0.2);  // leaf edge
+    c = mix(c*0.9, c, smoothstep(0.0, 0.1, L));                        // thin air gap between leaves
+    c = mix(c, vec3(0.95,0.98,0.86), (1.0 - smoothstep(0.06, 0.1, L))*step(0.06, L)*0.08);  // leaf edge
     if(length(q.xz) < fCoreP.y && q.y < 0.15*fR.y) c = fCoreA*(0.9 + 0.1*fvn(q*30.0));    // stalk
   } else if(fCore==10){ // hollow-ish centre with seeds (pumpkin, pepper, melon)
     if(d < fCoreP.x){ c = fCoreA * (0.8 + 0.3*fvn(q*14.0)); if(fvn(q*fCoreP.y) > 0.78) c = fCoreB; }

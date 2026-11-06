@@ -4,12 +4,12 @@ import { boxHits, inside, countCells } from './food.js';
 export const FPS = 30;
 // sets = [cuts ⟂x (vertical chops), cuts ⟂y (horizontal slide), cuts ⟂z (vertical chops front→back = collapse)]
 export const DEF = [
-  { sets: [4, 3, 3], t: [[0.15, 1.75], [2.0, 3.0], [3.3, 4.6]], end: 5.0, zoom: 1.0, mode: 'rigid' },
-  { sets: [17, 16, 17], t: [[5.3, 8.4], [8.9, 11.9], [12.6, 17.0]], end: 18.0, zoom: 0.88, mode: 'rigid' },
-  { sets: [33, 34, 33], t: [[18.3, 21.0], [21.5, 23.6], [24.0, 28.6]], end: 29.5, zoom: 0.78, mode: 'grain', vis: 34 },
-  { sets: [84, 83, 83], t: [[29.8, 33.0], [33.4, 36.4], [36.9, 41.4]], end: 42.0, zoom: 0.70, mode: 'grain', vis: 38 },
-  { sets: [167, 166, 167], t: [[42.3, 45.9], [46.3, 49.9], [50.4, 55.9]], end: 56.5, zoom: 0.62, mode: 'grain', vis: 44 },
-  { sets: [334, 333, 333], t: [[56.8, 60.6], [61.1, 64.6], [65.1, 71.2]], end: 76.4, zoom: 0.55, mode: 'grain', vis: 48 },
+  { sets: [4, 3, 3], t: [[0.15, 1.75], [2.0, 3.0], [3.3, 4.6]], end: 5.0, zoom: 0.72, mode: 'rigid' },
+  { sets: [17, 16, 17], t: [[5.3, 8.4], [8.9, 11.9], [12.6, 17.0]], end: 18.0, zoom: 0.72, mode: 'rigid' },
+  { sets: [33, 34, 33], t: [[18.3, 21.0], [21.5, 23.6], [24.0, 28.6]], end: 29.5, zoom: 0.72, mode: 'grain', vis: 34 },
+  { sets: [84, 83, 83], t: [[29.8, 33.0], [33.4, 36.4], [36.9, 41.4]], end: 42.0, zoom: 0.72, mode: 'grain', vis: 38 },
+  { sets: [167, 166, 167], t: [[42.3, 45.9], [46.3, 49.9], [50.4, 55.9]], end: 56.5, zoom: 0.72, mode: 'grain', vis: 44 },
+  { sets: [334, 333, 333], t: [[56.8, 60.6], [61.1, 64.6], [65.1, 71.2]], end: 76.4, zoom: 0.72, mode: 'grain', vis: 48 },
 ];
 export const TOTAL = 76.4;
 export const HOOK_T0 = 68.6;   // 1 s from the last collapse, when the most cubes are falling
@@ -67,7 +67,7 @@ export function buildPieces(food, r) {
     }
     const slabFromFront = nz - 1 - k;
     const chop = Math.min(s3.n, Math.ceil((slabFromFront + 1) / nz * s3.n - 1e-9));
-    p.release = s3.t0 + chop * s3.dt + 0.012 + rnd() * 0.02;
+    p.release = s3.t0 + chop * s3.dt + 0.008 + (1 - j / Math.max(1, ny - 1)) * 0.025 + rnd() * 0.012;
     p.hy = j / Math.max(1, ny - 1);
     out.push(p);
   }
@@ -80,8 +80,8 @@ export function buildPieces(food, r) {
 export function releaseImpulse(p, rnd) {
   const hy = p.hy;
   return {
-    v: [(rnd() - .5) * 0.15, 0, 0.15 + 0.45 * hy + rnd() * 0.1],
-    w: [0.5 + 1.5 * hy * rnd(), (rnd() - .5) * 0.6, (rnd() - .5) * 0.8],
+    v: [(rnd() - .5) * 0.2, -0.1, 0.35 + 1.6 * hy + rnd() * 0.25],   // blade wedge: the slab leans forward, top first
+    w: [1.0 + 4 * hy * rnd(), (rnd() - .5) * 0.8, (rnd() - .5) * 1.2],
   };
 }
 // cut fruit / veg: wet surfaces -> high friction, almost no bounce; air drag negligible at this size

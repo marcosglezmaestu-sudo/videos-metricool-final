@@ -28,7 +28,7 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture; scene.
 const camera = new THREE.PerspectiveCamera(50, W / H, 0.05, 60);
 const key = new THREE.DirectionalLight(0xfff0dc, 2.6);
 key.position.set(-3.0, 7.5, 3.5); key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
-Object.assign(key.shadow.camera, { left: -3.2, right: 3.2, top: 3.2, bottom: -3.2, near: 1, far: 20 });
+Object.assign(key.shadow.camera, { left: -3.8, right: 3.8, top: 3.8, bottom: -3.8, near: 1, far: 20 });
 key.shadow.bias = -0.0005; key.shadow.normalBias = 0.01; scene.add(key);
 scene.add(new THREE.HemisphereLight(0xfff3e6, 0x3a3128, 0.55));
 function mulb(a) { return mulberry(a); }
@@ -217,7 +217,7 @@ function setupRound(r) {
     const cen = new Float32Array(pieces.length * 3); pieces.forEach((p, i) => cen.set([p.cx, p.cy, p.cz], i * 3));
     bg.setAttribute('aObj', new THREE.InstancedBufferAttribute(cen, 3));
     const im = new THREE.InstancedMesh(bg, grainMaterial(), pieces.length);
-    im.castShadow = r.idx <= 2; im.receiveShadow = r.idx <= 2; im.frustumCulled = false;
+    im.castShadow = true; im.receiveShadow = true; im.frustumCulled = false;
     a.mesh = im;
   }
   group.add(a.mesh);
@@ -314,7 +314,13 @@ function renderAt(f) {
   lastRound = f;
   // knife
   const sh = 1 / FPS;
-  ghosts.forEach((g, i) => { const kp = knifePose(Math.max(0, t - sh * (i / (NG - 1)))); g.position.copy(kp.pos); g.quaternion.copy(kp.q); });
+  // fast knife = light streak (real motion blur averages the blade with the background) and no hard shadow
+  let kdt = 1; for (let s = 0; s < 3; s++) { const si = setInfo(r, s); if (t >= si.t0 - 0.05 && t <= si.t1 + 0.05) kdt = si.dt; }
+  const speedK = clamp(kdt / 0.08, 0.25, 1);
+  ghosts.forEach((g, i) => {
+    const kp = knifePose(Math.max(0, t - sh * (i / (NG - 1)))); g.position.copy(kp.pos); g.quaternion.copy(kp.q);
+    g.traverse(o => { if (o.isMesh) { o.material.opacity = 0.17 * speedK; o.castShadow = i === 0 && kdt >= 0.08; } });
+  });
   // camera (fixed inside a round, closer every round)
   const tgt = new THREE.Vector3(0.05, Math.max(0.25, RY * 0.66), 0.15);
   camera.position.copy(tgt).addScaledVector(CAM_DIR, 9.5 * r.zoom);

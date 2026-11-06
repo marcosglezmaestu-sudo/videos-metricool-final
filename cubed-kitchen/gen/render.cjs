@@ -33,7 +33,13 @@ async function write(ff, url) { const b = Buffer.from(url.split(',')[1], 'base64
   await page.waitForFunction('window.READY === true', { timeout: 120000 });
   const info = await page.evaluate(() => ({ n: SCENE.nframes, hook: SCENE.hook, food: SCENE.food, info: SCENE.info }));
   console.log(JSON.stringify(info));
-  if (mode === 'preview') {
+  if (mode === 'range') {   // node render.cjs range <job> f0,f1 -> <job>/range.mp4 (+ audio.json)
+    const [f0, f1] = frames.split(',').map(Number); const ff = ffmpeg(path.join(job, 'range.mp4')); const t0 = Date.now();
+    for (let f = f0; f < f1; f++) { await write(ff, await page.evaluate(f => SCENE.frame(f), f)); if (f % 15 === 0) console.log(`frame ${f} ${((Date.now() - t0) / 1000).toFixed(0)}s`); }
+    ff.stdin.end(); await new Promise(r => ff.on('close', r));
+    fs.writeFileSync(path.join(job, 'audio.json'), JSON.stringify(await page.evaluate(() => SCENE.audioLog())));
+    console.log('RANGE_DONE');
+  } else if (mode === 'preview') {
     fs.mkdirSync(path.join(job, 'prev'), { recursive: true });
     for (const f of frames.split(',').map(Number)) {
       const t0 = Date.now(); const url = await page.evaluate(f => SCENE.frame(f), f);
