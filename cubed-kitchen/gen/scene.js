@@ -345,11 +345,8 @@ function renderAt(f) {
     ctx.fillStyle = '#dca548'; ctx.font = '800 36px "Inter Display"'; ctx.fillText(label, W / 2, baseY + 46);
   };
   drawCounter(fmt(cuts), 'CUTS', 178);
-  const bottomPt = new THREE.Vector3(0, 0, RZ * (1 + 1.3 * (wholeMat.uniforms.fLump ? wholeMat.uniforms.fLump.value : 0)) + 0.04).applyMatrix4(group.matrixWorld).project(camera);
-  const foodBottom = (1 - bottomPt.y) / 2 * H;
-  const capTop = 0.74 * 108;
-  const baseY = Math.min(H - 70, Math.max(560, foodBottom + 14 + capTop));
-  drawCounter((r.approx && cubes > 0 ? '≈ ' : '') + fmt(cubes), 'CUBES', baseY);
+  ctx.fillStyle = '#f4efe6'; ctx.font = '800 47px "Inter Display"'; ctx.fillText((r.approx && cubes > 0 ? '≈ ' : '') + fmt(cubes), W / 2, 922);
+  ctx.fillStyle = '#dca548'; ctx.font = '800 26px "Inter Display"'; ctx.fillText('CUBES', W / 2, 958);
   ctx.shadowBlur = 0;
 }
 
