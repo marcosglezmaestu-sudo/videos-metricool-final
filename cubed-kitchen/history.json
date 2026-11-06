@@ -11,8 +11,11 @@
    "scheduled": "2026-11-06T13:15:00+01:00",
    "tiktok": {
     "uuid": "-6299908543378013013",
-    "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=-6299908543378013013"
-   }
-  }
+    "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=-6299908543378013013",
+    "id": 418843458
+   },
+   "id": 418843442
+  },
+  "status": "cancelado"
  }
 ]
