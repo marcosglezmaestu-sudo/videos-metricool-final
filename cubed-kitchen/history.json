@@ -17,5 +17,23 @@
    "id": 418843442
   },
   "status": "cancelado"
+ },
+ {
+  "food": "Lime",
+  "date": "2026-11-06",
+  "slot": 19,
+  "title": "1,000 Cuts on a Lime 🔪 How Many Cubes?",
+  "duration": 77.4,
+  "metricool": {
+   "uuid": "1198715305101378621",
+   "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=1198715305101378621",
+   "scheduled": "2026-11-06T19:00:00+01:00",
+   "id": 419172977,
+   "tiktok": {
+    "uuid": "835647686898958593",
+    "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=835647686898958593",
+    "id": 419173198
+   }
+  }
  }
 ]
