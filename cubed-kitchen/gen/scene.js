@@ -285,7 +285,9 @@ function renderAt(f) {
   const slabs = Math.floor(done[2] / s3.n * r.vn[2] + 1e-9);
   const clipZ = RZ - slabs * r.vcell[2];
   const wholeVis = clipZ > -RZ + 1e-4;
-  whole.visible = wholeVis; caster.visible = wholeVis;
+  whole.visible = wholeVis;
+  // whole-food shadow only while it is intact: once slabs fall, the cubes cast their own shadows
+  caster.visible = wholeVis && slabs === 0;
   wholeMat.uniforms.uClipZ.value = clipZ;
   wholeMat.uniforms.uDone.value.set(done[0], done[1], done[2]);
   wholeMat.uniforms.uCell.value.set(...r.cell);
@@ -335,10 +337,19 @@ function renderAt(f) {
   let cubes = Math.round(r.total * released / nVis);
   if (r.approx) cubes = Math.round(cubes / 1000) * 1000;
   ctx.textAlign = 'center'; ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 10;
-  ctx.fillStyle = '#f4efe6'; ctx.font = '800 108px "Inter Display"'; ctx.fillText(fmt(cuts), W / 2, 178);
-  ctx.fillStyle = '#dca548'; ctx.font = '800 36px "Inter Display"'; ctx.fillText('CUTS', W / 2, 224);
-  ctx.fillStyle = '#f4efe6'; ctx.font = '800 47px "Inter Display"'; ctx.fillText((r.approx && cubes > 0 ? '≈ ' : '') + fmt(cubes), W / 2, 922);
-  ctx.fillStyle = '#dca548'; ctx.font = '800 26px "Inter Display"'; ctx.fillText('CUBES', W / 2, 958);
+  // same style for both counters; the bottom one sits right under the food being cut (never over it)
+  const drawCounter = (txt, label, baseY) => {
+    let size = 108; ctx.font = `800 ${size}px "Inter Display"`;
+    const wTxt = ctx.measureText(txt).width; if (wTxt > W - 36) { size = Math.floor(size * (W - 36) / wTxt); ctx.font = `800 ${size}px "Inter Display"`; }
+    ctx.fillStyle = '#f4efe6'; ctx.fillText(txt, W / 2, baseY);
+    ctx.fillStyle = '#dca548'; ctx.font = '800 36px "Inter Display"'; ctx.fillText(label, W / 2, baseY + 46);
+  };
+  drawCounter(fmt(cuts), 'CUTS', 178);
+  const bottomPt = new THREE.Vector3(0, 0, RZ * (1 + 1.3 * (wholeMat.uniforms.fLump ? wholeMat.uniforms.fLump.value : 0)) + 0.04).applyMatrix4(group.matrixWorld).project(camera);
+  const foodBottom = (1 - bottomPt.y) / 2 * H;
+  const capTop = 0.74 * 108;
+  const baseY = Math.min(H - 70, Math.max(560, foodBottom + 14 + capTop));
+  drawCounter((r.approx && cubes > 0 ? '≈ ' : '') + fmt(cubes), 'CUBES', baseY);
   ctx.shadowBlur = 0;
 }
 

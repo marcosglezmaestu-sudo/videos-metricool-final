@@ -8,12 +8,21 @@ export const CORE = { none: 0, segments: 1, rings: 2, seedring: 3, pit: 4, core_
 
 export function shapeId(f) { return SHAPES[f.shape] ?? 0; }
 
+// Organic outer shape: real produce is never a perfect ellipsoid. Low-frequency bumps of the radius
+// (same formula in JS and GLSL). lump = relative amplitude (lettuce ~0.07, citrus ~0.02).
+export const lumpOf = f => f.lump ?? (f.shape === 'ellipsoid' ? 0.025 : 0);
+export function seedNum(f) { let h = 0; for (const ch of f.name) h = (h * 31 + ch.charCodeAt(0)) % 997; return h / 997 * 6.2831853; }
+const LK = [[2.3, 1.1, -1.7, 0.4, 0.18], [-1.3, 3.1, 0.9, 1.9, 0.18], [5.9, -1.0, 3.5, 2.7, 0.3], [-6.6, 4.2, -5.3, 0.8, 0.3], [8.3, 7.0, 3.0, 4.1, 0.25]];
+export function lumpN(dx, dy, dz, seed) { let n = 0; for (const [a, b, c, ph, A] of LK) n += A * Math.sin(a * dx + b * dy + c * dz + ph + seed); return n; }
+
 // normalised depth: 1 on the surface, 0 at the centre
 export function depth(f, x, y, z) {
   const [rx, ry, rz] = f.R;
   if (f.shape === 'cylinder') return Math.max(Math.hypot(x / rx, z / rz), Math.abs(y) / ry);
   if (f.shape === 'box') return Math.max(Math.abs(x) / rx, Math.abs(y) / ry, Math.abs(z) / rz);
-  return Math.hypot(x / rx, y / ry, z / rz);
+  const d = Math.hypot(x / rx, y / ry, z / rz), L = lumpOf(f);
+  if (!L || d < 1e-6) return d;
+  return d / (1 + L * lumpN(x / rx / d, y / ry / d, z / rz / d, seedNum(f)));
 }
 export const inside = (f, x, y, z) => depth(f, x, y, z) < 1;
 
@@ -24,17 +33,18 @@ export function boxHits(f, lo, hi) {
   const px = c(lo[0], hi[0]), py = c(lo[1], hi[1]), pz = c(lo[2], hi[2]);
   if (f.shape === 'box') return lo[0] < rx && hi[0] > -rx && lo[1] < ry && hi[1] > -ry && lo[2] < rz && hi[2] > -rz;
   if (f.shape === 'cylinder') return Math.hypot(px / rx, pz / rz) < 0.999 && lo[1] < ry && hi[1] > -ry;
-  return Math.hypot(px / rx, py / ry, pz / rz) < 0.999;
+  return Math.hypot(px / rx, py / ry, pz / rz) < 0.999 * (1 + 1.3 * lumpOf(f));
 }
 
 // project a point outside the food back onto its surface; returns [point, normal|null]
 export function project(f, q) {
   const [rx, ry, rz] = f.R;
   if (f.shape === 'ellipsoid') {
-    const d = Math.hypot(q[0] / rx, q[1] / ry, q[2] / rz);
+    const d = depth(f, q[0], q[1], q[2]);
     if (d <= 1) return [q, null];
-    const p = q.map(v => v / d); const g = [p[0] / rx / rx, p[1] / ry / ry, p[2] / rz / rz]; const l = Math.hypot(...g);
-    return [p, g.map(v => v / l)];
+    const p = q.map(v => v / d), e = 0.003;
+    const g = [0, 1, 2].map(k => { const a = p.slice(), b = p.slice(); a[k] += e; b[k] -= e; return depth(f, ...a) - depth(f, ...b); });
+    const l = Math.hypot(...g); return [p, g.map(v => v / l)];
   }
   if (f.shape === 'cylinder') {
     let p = q.slice(), n = null;
@@ -76,15 +86,22 @@ uniform float fSkinT; uniform vec3 fSkinA; uniform vec3 fSkinB; uniform int fSki
 uniform float fUnderT; uniform vec3 fUnder;
 uniform vec3 fFleshA; uniform vec3 fFleshB; uniform float fFleshScale;
 uniform int fCore; uniform vec3 fCoreA; uniform vec3 fCoreB; uniform vec4 fCoreP; uniform int fAxis;
-uniform int fLayN; uniform float fLayY[8]; uniform vec3 fLayC[8]; uniform float fBump;
+uniform int fLayN; uniform float fLayY[8]; uniform vec3 fLayC[8]; uniform float fBump; uniform float fLump; uniform float fLumpSeed;
 float fh3(vec3 p){ p = fract(p*0.3183099+vec3(.1,.2,.3)); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
 float fvn(vec3 x){ vec3 i=floor(x); vec3 f=fract(x); f=f*f*(3.0-2.0*f);
   return mix(mix(mix(fh3(i),fh3(i+vec3(1,0,0)),f.x),mix(fh3(i+vec3(0,1,0)),fh3(i+vec3(1,1,0)),f.x),f.y),
              mix(mix(fh3(i+vec3(0,0,1)),fh3(i+vec3(1,0,1)),f.x),mix(fh3(i+vec3(0,1,1)),fh3(i+vec3(1,1,1)),f.x),f.y),f.z); }
+float fLumpN(vec3 d){
+  return 0.18*sin(dot(vec3(2.3,1.1,-1.7),d)+0.4+fLumpSeed) + 0.18*sin(dot(vec3(-1.3,3.1,0.9),d)+1.9+fLumpSeed)
+       + 0.3*sin(dot(vec3(5.9,-1.0,3.5),d)+2.7+fLumpSeed) + 0.3*sin(dot(vec3(-6.6,4.2,-5.3),d)+0.8+fLumpSeed)
+       + 0.25*sin(dot(vec3(8.3,7.0,3.0),d)+4.1+fLumpSeed);
+}
 float fDepth(vec3 q){
   if(fShape==1) return max(length(q.xz/fR.xz), abs(q.y)/fR.y);
   if(fShape==2) return max(max(abs(q.x)/fR.x, abs(q.y)/fR.y), abs(q.z)/fR.z);
-  return length(q/fR);
+  float d = length(q/fR);
+  if(fLump <= 0.0 || d < 1e-5) return d;
+  return d / (1.0 + fLump*fLumpN(q/fR/d));
 }
 vec3 fAxisFrame(vec3 q){ // returns (radial distance, angle, along-axis) around the chosen axis
   vec3 a = fAxis==0 ? q.yzx : (fAxis==1 ? q.zxy : q);
@@ -220,11 +237,25 @@ bool foodRay(vec3 ro, vec3 rd, out float t0, out float t1, out vec3 nOut){
     else { vec3 p = ro + rd*ca0; nOut = normalize(vec3(p.x/(fR.x*fR.x), 0, p.z/(fR.z*fR.z))); }
     return t0 <= t1;
   }
-  vec3 oc = ro/fR, dd = rd/fR;
+  float inf = 1.0 + 1.3*fLump;
+  vec3 oc = ro/(fR*inf), dd = rd/(fR*inf);
   float a = dot(dd,dd), b = dot(oc,dd), c = dot(oc,oc)-1.0;
   float h = b*b - a*c; if(h < 0.0) return false; h = sqrt(h);
   t0 = (-b-h)/a; t1 = (-b+h)/a;
-  vec3 p = ro + rd*t0; nOut = normalize(p/(fR*fR));
+  if(fLump > 0.0){
+    // march the organic surface inside the bounding ellipsoid, then refine
+    float ta = t0, tb = t1, step = (tb - ta)/56.0, t = ta; bool hit = false;
+    for(int i=0;i<56;i++){ t += step; if(fDepth(ro + rd*t) < 1.0){ hit = true; break; } }
+    if(!hit) return false;
+    float lo = t - step, hi = t;
+    for(int i=0;i<8;i++){ float m = 0.5*(lo+hi); if(fDepth(ro + rd*m) < 1.0) hi = m; else lo = m; }
+    t0 = hi;
+  }
+  vec3 p = ro + rd*t0;
+  if(fLump > 0.0){
+    float e = 0.003;
+    nOut = normalize(vec3(fDepth(p+vec3(e,0,0))-fDepth(p-vec3(e,0,0)), fDepth(p+vec3(0,e,0))-fDepth(p-vec3(0,e,0)), fDepth(p+vec3(0,0,e))-fDepth(p-vec3(0,0,e))));
+  } else nOut = normalize(p/(fR*fR));
   return true;
 }
 `;
@@ -245,6 +276,6 @@ export function foodUniforms(f, THREE) {
     fFleshA: { value: v(f.flesh.color) }, fFleshB: { value: v(f.flesh.color2 || f.flesh.color) }, fFleshScale: { value: f.flesh.scale || 8 },
     fCore: { value: CORE[core.type || 'none'] ?? 0 }, fCoreA: { value: v(core.colorA) }, fCoreB: { value: v(core.colorB) },
     fCoreP: { value: new THREE.Vector4(...(core.p || [0, 0, 0, 0])) }, fAxis: { value: ({ x: 0, y: 1, z: 2 })[core.axis || 'z'] },
-    fLayN: { value: lay.length }, fLayY: { value: layY }, fLayC: { value: layC }, fBump: { value: f.bump ?? 0.35 },
+    fLayN: { value: lay.length }, fLayY: { value: layY }, fLayC: { value: layC }, fBump: { value: f.bump ?? 0.35 }, fLump: { value: lumpOf(f) }, fLumpSeed: { value: seedNum(f) },
   };
 }
