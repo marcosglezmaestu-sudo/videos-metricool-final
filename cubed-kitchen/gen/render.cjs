@@ -15,7 +15,14 @@ const ffmpeg = out => spawn('ffmpeg', ['-y', '-v', 'error', '-f', 'image2pipe', 
 async function write(ff, url) { const b = Buffer.from(url.split(',')[1], 'base64'); if (!ff.stdin.write(b)) await new Promise(r => ff.stdin.once('drain', r)); }
 (async () => {
   const [mode, job, frames] = process.argv.slice(2);
-  const jobRel = path.relative(ROOT, path.resolve(job));
+  let jobRel = path.relative(ROOT, path.resolve(job));
+  if (jobRel.startsWith('..')) { // the browser can't fetch files outside ROOT: link the job dir inside it
+    const link = path.join(ROOT, '.jobs', path.basename(path.resolve(job)));
+    fs.mkdirSync(path.dirname(link), { recursive: true });
+    try { fs.unlinkSync(link); } catch (e) {}
+    fs.symlinkSync(path.resolve(job), link);
+    jobRel = path.relative(ROOT, link);
+  }
   const browser = await puppeteer.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', headless: 'new', protocolTimeout: 1800000,
     args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage();
