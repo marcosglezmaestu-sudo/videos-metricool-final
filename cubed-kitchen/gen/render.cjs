@@ -34,15 +34,26 @@ async function write(ff, url) { const b = Buffer.from(url.split(',')[1], 'base64
       console.log('frame', f, Date.now() - t0, 'ms', await page.evaluate(() => JSON.stringify({sim: Math.round(window.TSIM||0), gl: Math.round(window.TGL||0)})));
     }
   } else {
-    const main = ffmpeg(path.join(job, 'main.mp4')), hook = ffmpeg(path.join(job, 'hook.mp4'));
+    // resumable: one segment per round (seg_<k>.mp4 + seg_<k>.done); rounds are independent
+    const segs = await page.evaluate(() => SCENE.segments);
     const t0 = Date.now();
-    for (let f = 0; f < info.n; f++) {
-      await write(main, await page.evaluate(f => SCENE.frame(f), f));
-      if (f >= info.hook[0] && f < info.hook[1]) await write(hook, await page.evaluate(() => SCENE.rawFrame()));
-      if (f % 60 === 0) console.log(`frame ${f}/${info.n} ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+    for (let k = 0; k < segs.length; k++) {
+      const [f0, f1] = segs[k];
+      const done = path.join(job, `seg_${k}.done`);
+      if (fs.existsSync(done)) { console.log(`segment ${k} already done`); continue; }
+      const seg = ffmpeg(path.join(job, `seg_${k}.mp4`));
+      const hasHook = info.hook[0] >= f0 && info.hook[0] < f1;
+      const hook = hasHook ? ffmpeg(path.join(job, 'hook.mp4')) : null;
+      for (let f = f0; f < f1; f++) {
+        await write(seg, await page.evaluate(f => SCENE.frame(f), f));
+        if (hook && f >= info.hook[0] && f < info.hook[1]) await write(hook, await page.evaluate(() => SCENE.rawFrame()));
+        if (f % 60 === 0) console.log(`frame ${f}/${info.n} ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+      }
+      seg.stdin.end(); await new Promise(r => seg.on('close', r));
+      if (hook) { hook.stdin.end(); await new Promise(r => hook.on('close', r)); }
+      fs.writeFileSync(done, 'ok');
+      console.log(`segment ${k} done`);
     }
-    main.stdin.end(); hook.stdin.end();
-    await Promise.all([new Promise(r => main.on('close', r)), new Promise(r => hook.on('close', r))]);
     fs.writeFileSync(path.join(job, 'audio.json'), JSON.stringify(await page.evaluate(() => SCENE.audioLog())));
     console.log('RENDER_DONE');
   }

@@ -7,10 +7,12 @@ cd "$(dirname "$0")"
 JOB="$1"; FOOD="${2:-}"
 mkdir -p "$JOB"
 HIST=../history.json; [ -f "$HIST" ] || echo '[]' > "$HIST"
-python3 pick_food.py foods.json "$HIST" "$JOB/food.json" ${FOOD:+"$FOOD"}
-echo "== physics"; node simulate.js "$JOB/food.json" "$JOB"
-echo "== render (about 1 h)"; node render.cjs full "$JOB" > "$JOB/render.log" 2>&1
+[ -f "$JOB/food.json" ] || python3 pick_food.py foods.json "$HIST" "$JOB/food.json" ${FOOD:+"$FOOD"}
+echo "== physics"; [ -f "$JOB/sim.json" ] || node simulate.js "$JOB/food.json" "$JOB"
+echo "== render (about 1 h 45 min, resumable: re-run the same command to continue)"; node render.cjs full "$JOB" >> "$JOB/render.log" 2>&1
 grep -q RENDER_DONE "$JOB/render.log"
+ls "$JOB"/seg_*.mp4 | sort -V | sed "s#.*/#file #" > "$JOB/segs.txt"
+ffmpeg -y -v error -f concat -safe 0 -i "$JOB/segs.txt" -c copy "$JOB/main.mp4"
 echo "== audio"; python3 audio.py "$JOB"
 echo "== assemble"
 ffmpeg -y -v error -i "$JOB/hook.mp4" -i "$JOB/main.mp4" -i "$JOB/final.wav" \

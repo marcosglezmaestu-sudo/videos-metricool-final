@@ -9,11 +9,12 @@ Responde siempre en español de España. Trabaja solo; no preguntes nada.
 - `git config user.email marcos.glezmaestu@gmail.com && git config user.name Marcos`.
 - HOY = fecha de Madrid (`TZ=Europe/Madrid date +%F`). Si `../history.json` ya tiene un vídeo con `date` = HOY y `slot` = FRANJA, termina sin hacer nada.
 
-## 1. Generar el vídeo (≈1 h 30 min)
+## 1. Generar el vídeo (≈1 h 45 min)
 - `nohup ./make_video.sh ~/job > ~/job.log 2>&1 &` (elige sola una comida al azar que no esté en el historial).
 - Espera en tramos de ≤ 10 min con `sleep 540; tail -3 ~/job.log; grep -E '^frame' ~/job/render.log | tail -1`.
   **No** esperes con `pgrep -f make_video` (se encuentra a sí mismo).
 - Termina cuando `~/job.log` contenga `VIDEO_OK` (o un error).
+- El render es **reanudable**: si el proceso desaparece (reinicio del entorno) sin `VIDEO_OK`, vuelve a lanzar exactamente el mismo comando; sigue desde la última ronda terminada (archivos `~/job/seg_<n>.done`).
 - Si sale `NO_FOODS_LEFT`: inventa una comida nueva (distinta de todas las de `foods.json` e historial) con el mismo esquema JSON que las demás (shape, R, skin, flesh, core…), añádela a `foods.json` y relanza.
 - Si falla, lee el error, corrígelo si es algo puntual y relanza **una** vez. Si vuelve a fallar, avisa a Marcos (paso 6) y no publiques.
 

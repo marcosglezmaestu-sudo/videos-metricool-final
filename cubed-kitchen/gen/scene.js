@@ -342,6 +342,7 @@ function cutEvents() {
 window.SCENE = {
   nframes: NFRAMES, fps: FPS, total: TOTAL, food: food.name,
   hook: [Math.round(HOOK_T0 * FPS), Math.round((HOOK_T0 + HOOK_LEN) * FPS)],
+  segments: rounds.map((r, k) => [Math.round(r.start * FPS), k === rounds.length - 1 ? NFRAMES : Math.round(r.end * FPS)]),
   info: rounds.map(r => ({ cuts: r.ncut, total: r.total, vn: r.vn })),
   frame(f) { renderAt(f); return out.toDataURL('image/jpeg', 0.93); },
   rawFrame() { return glCanvas.toDataURL('image/jpeg', 0.93); },   // same frame without HUD/text (hook)
