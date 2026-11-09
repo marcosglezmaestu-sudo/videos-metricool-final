@@ -101,7 +101,17 @@ def timeline(proj, meta):
             first = min(holders, key=lambda h: h['at'])
             if first['at'] > 0.3:
                 first['at'] = 0.3; events.append(0.3)
-        scenes.append(dict(start=cur, dur=d, spec=sp, vo=m['i'] if speech > 0 else None,
+        words = []
+        if speech > 0:
+            toks = b['text'].split(); tot = sum(len(w_) + 1 for w_ in toks); cpos = 0
+            for w_ in toks:
+                a0 = cur + LEAD + speech * cpos / tot; cpos += len(w_) + 1
+                words.append((w_.strip('"'), a0, cur + LEAD + speech * cpos / tot))
+        chunks = []
+        for k in range(0, len(words), 3):
+            grp = words[k:k + 3]
+            chunks.append(dict(t0=grp[0][1], t1=grp[-1][2] if k + 3 < len(words) else cur + d, words=grp))
+        scenes.append(dict(start=cur, dur=d, spec=sp, vo=m['i'] if speech > 0 else None, chunks=chunks,
                            sfx=b.get('sfx'), pops=sorted(set(round(e, 2) for e in events if e > 0.05))))
         cur += d
     return scenes, cur
@@ -189,8 +199,9 @@ def render_range(scenes_json, f0, f1, outfile):
     sys.path.insert(0, HERE)
     import skia
     from draw import W, H
-    from scenes import render_scene
+    from scenes import render_scene, draw_caption
     scenes = json.load(open(scenes_json))
+    captions = H > W
     proc = subprocess.Popen(['ffmpeg', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'bgra', '-s', f'{W}x{H}',
                              '-r', str(FPS), '-i', '-', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20',
                              '-pix_fmt', 'yuv420p', outfile], stdin=subprocess.PIPE)
@@ -202,6 +213,7 @@ def render_range(scenes_json, f0, f1, outfile):
         while k > 0 and scenes[k]['start'] > t: k -= 1
         sc = scenes[k]
         c.save(); render_scene(c, t - sc['start'], sc['dur'], sc['spec']); c.restore()
+        if captions: draw_caption(c, t, sc['chunks'])
         proc.stdin.write(surf.makeImageSnapshot().tobytes())
     proc.stdin.close(); proc.wait()
 
@@ -209,6 +221,8 @@ if __name__ == '__main__':
     proj_path, out = sys.argv[1], sys.argv[2]
     os.makedirs(out, exist_ok=True)
     proj = load_project(proj_path)
+    if getattr(proj, 'FORMAT', 'horizontal') == 'vertical':
+        os.environ['IFM_FORMAT'] = 'vertical'
     if '--tts' in sys.argv or not os.path.exists(os.path.join(out, 'vo.json')):
         meta = tts(proj, out)
     meta = json.load(open(os.path.join(out, 'vo.json')))
@@ -227,6 +241,9 @@ if __name__ == '__main__':
         for i in idx:
             sc = scenes[i]; surf = skia.Surface(W, H)
             render_scene(surf.getCanvas(), sc['dur'] * 0.8, sc['dur'], sc['spec'])
+            if H > W:
+                from scenes import draw_caption
+                draw_caption(surf.getCanvas(), sc['start'] + sc['dur'] * 0.5, sc['chunks'])
             surf.makeImageSnapshot().save(os.path.join(out, f'prev_{i:03d}.png'))
     if '--render' in sys.argv:
         build_audio(scenes, total, out)

@@ -3,7 +3,8 @@ import math, json, os
 import numpy as np
 import skia
 
-W, H = 1920, 1080
+VERTICAL = os.environ.get('IFM_FORMAT') == 'vertical'
+W, H = (1080, 1920) if VERTICAL else (1920, 1080)
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # ---------- palette (Inside Football Money) ----------
@@ -231,7 +232,7 @@ def overlay_grain(c, alpha=0.55):
 
 def watermark(c, alpha=0.55):
     # IFM monogram, top-right, away from YouTube UI
-    x, y = W - 150, 46
+    x, y = (60, 170) if VERTICAL else (W - 150, 46)
     rrect(c, x, y, 104, 46, 10, P('navy'), alpha * 0.85, stroke=(P('gold'), 2))
     draw_text(c, 'IFM', x + 52, y + 33, font(FONT_HEAD, 27), P('gold'), alpha=min(1, alpha + 0.3))
 

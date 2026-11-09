@@ -634,7 +634,28 @@ def render_scene(c, t, d, sp):
     background(c, sp.get('bg', 'navy'))
     z = 1 + sp.get('zoom', 0.035) * clamp(t / max(d, 0.1))
     c.save(); c.translate(W / 2, H / 2); c.scale(z, z); c.translate(-W / 2, -H / 2)
-    TEMPLATES[sp['type']](c, t, d, sp)
+    fn = TEMPLATES.get(sp['type'])
+    if H > W:
+        from scenes_v import TEMPLATES_V
+        fn = TEMPLATES_V[sp['type']]
+    fn(c, t, d, sp)
     c.restore()
     overlay_grain(c)
     watermark(c)
+
+
+def draw_caption(c, t, chunks):
+    """One-line captions for vertical video: chunk of 2-3 words, spoken word in gold. Sits above the
+    platform UI band (y ~1400) and left of the side buttons."""
+    for ch in chunks:
+        if ch['t0'] <= t < ch['t1']:
+            f = font(FONT_HEAD, 62)
+            words = [w_[0].upper() for w_ in ch['words']]
+            total = sum(text_w(w_, f) for w_ in words) + text_w(' ', f) * (len(words) - 1)
+            x = 510 - total / 2; y = 1410
+            for (wd, a0, a1), up in zip(ch['words'], words):
+                col = P('gold') if a0 <= t < a1 else P('paper')
+                draw_text(c, up, x, y, f, col, 'left', outline=(P('navy'), 12))
+                draw_text(c, up, x, y, f, col, 'left')
+                x += text_w(up, f) + text_w(' ', f)
+            return
