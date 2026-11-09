@@ -158,5 +158,16 @@
    "uuid": "1537631251932267161",
    "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=1537631251932267161"
   }
+ },
+ {
+  "food": "Strawberry",
+  "date": "2026-11-09",
+  "slot": 19,
+  "title": "1,000 Cuts on a Strawberry 🔪 How Many Cubes?",
+  "duration": 77.4,
+  "metricool": {
+   "uuid": "-9127945431552209549",
+   "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=-9127945431552209549"
+  }
  }
 ]
