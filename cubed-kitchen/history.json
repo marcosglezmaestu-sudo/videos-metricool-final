@@ -180,5 +180,16 @@
    "uuid": "5040005863825361081",
    "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=5040005863825361081"
   }
+ },
+ {
+  "food": "Cheesecake",
+  "date": "2026-11-10",
+  "slot": 14,
+  "title": "1,000 Cuts on a Cheesecake 🔪 How Many Cubes?",
+  "duration": 77.4,
+  "metricool": {
+   "uuid": "8258565251554689811",
+   "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=8258565251554689811"
+  }
  }
 ]
