@@ -169,5 +169,16 @@
    "uuid": "-9127945431552209549",
    "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=-9127945431552209549"
   }
+ },
+ {
+  "food": "Pumpkin",
+  "date": "2026-11-10",
+  "slot": 10,
+  "title": "1,000 Cuts on a Pumpkin 🔪 How Many Cubes?",
+  "duration": 77.4,
+  "metricool": {
+   "uuid": "5040005863825361081",
+   "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=5040005863825361081"
+  }
  }
 ]
