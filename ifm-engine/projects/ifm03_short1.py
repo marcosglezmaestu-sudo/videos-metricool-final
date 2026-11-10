@@ -3,7 +3,7 @@ TITLE = "They Bought Man United With Its Own Money"
 OUTNAME = 'IFM03_short1_glazers_borrowed_money'
 FORMAT = 'vertical'
 VOICE = "bm_fable"
-SPEED = 1.18
+SPEED = 1.30
 
 BEATS = [
 dict(text="Manchester United was bought with money the club had to pay back itself.",

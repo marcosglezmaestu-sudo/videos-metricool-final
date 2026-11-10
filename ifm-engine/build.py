@@ -8,8 +8,8 @@ import soundfile as sf
 HERE = os.path.dirname(os.path.abspath(__file__))
 SR = 24000
 FPS = 30
-LEAD = 0.12          # silence before narration in each scene
-DEFAULT_PAUSE = 0.32 # gap after each beat (matches the reference cadence)
+LEAD = 0.06          # silence before narration in each scene (faster pace, nov 2026)
+DEFAULT_PAUSE = 0.18 # gap after each beat (faster pace requested nov 2026)
 
 def load_project(path):
     spec = importlib.util.spec_from_file_location('proj', path)

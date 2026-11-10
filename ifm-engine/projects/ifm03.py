@@ -4,7 +4,7 @@
 TITLE = "Who Really Owns Your Football Club?"
 OUTNAME = 'IFM03_who_really_owns_your_football_club'
 VOICE = "bm_fable"
-SPEED = 1.18
+SPEED = 1.30
 
 UK = 'United Kingdom'; US = 'United States of America'
 EU_VIEW = (-15, 60, 20, 62)
@@ -48,7 +48,7 @@ dict(text="By the end of this video, you'll know which type owns your club, and 
 dict(text="", pause=2.6, sfx='sting', scene=dict(type='logo', bg='navy', zoom=0.0)),
 
 # ---------------- TYPE 1: MEMBERS ----------------
-dict(text="Type one. The members.", sfx='whoosh', pause=0.6,
+dict(text="Type one. The members.", sfx='whoosh', pause=0.4,
      scene=dict(type='chapter', bg='green', num='1', kicker='Type', text='The\nmembers', tile='gold', accent='paper')),
 dict(text="Real Madrid has no owner in the normal sense. The club belongs to its members, the socios. Around one hundred thousand of them.",
      scene=dict(type='bignum', bg='paper', value=100000, prefix='~', num_at='hundred', label='Real Madrid members', sub='They own the club together',
@@ -97,7 +97,7 @@ dict(text="Any deal like that needs the members' approval first.",
      scene=dict(type='doc', bg='green', doc_title='PROPOSAL', stamp='MEMBERS VOTE', stamp_color='navy', stamp_at=0.6, caption="Members\nhave the\nfinal say", hl_lines=[2])),
 
 # ---------------- TYPE 2: LOCAL BUSINESSMAN ----------------
-dict(text="Type two. The local businessman.", sfx='whoosh', pause=0.6,
+dict(text="Type two. The local businessman.", sfx='whoosh', pause=0.4,
      scene=dict(type='chapter', bg='gold', num='2', kicker='Type', text='The local\nbusinessman', tile='red', accent='paper')),
 dict(text="This is the classic football owner. A rich man from the town, who grew up on the terraces and made his fortune nearby.",
      scene=dict(type='silhouette', bg='navy', back=None, tags=[dict(text='From the town', at='town'), dict(text='Grew up a fan', at='terraces'),
@@ -130,7 +130,7 @@ dict(text="That's why this type of owner is disappearing from the top leagues. B
                 b=dict(top='Now', value='BILLIONS', color='navy', vcolor='gold', at='billions'))),
 
 # ---------------- TYPE 3: INVESTOR ----------------
-dict(text="Type three. The investor.", sfx='whoosh', pause=0.6,
+dict(text="Type three. The investor.", sfx='whoosh', pause=0.4,
      scene=dict(type='chapter', bg='navy', num='3', kicker='Type', text='The\ninvestor', tile='green', accent='gold')),
 dict(text="Then came the investors. American sports owners, private equity firms and investment funds.",
      scene=dict(type='icons', bg='sky', items=[dict(icon='person', label='US sports owners', at='American'),
@@ -197,7 +197,7 @@ dict(text="Quick one. If you're learning something, subscribe. It helps the chan
      sfx='pop', scene=dict(type='cta', bg='navy', click_at='subscribe', comment='Who owns your club? Are you happy with it?', comment_at='comments')),
 
 # ---------------- TYPE 4: THE STATE ----------------
-dict(text="Type four. The state.", sfx='whoosh', pause=0.6,
+dict(text="Type four. The state.", sfx='whoosh', pause=0.4,
      scene=dict(type='chapter', bg='red', num='4', kicker='Type', text='The\nstate', tile='paper', accent='gold')),
 dict(text="In 2008, the Abu Dhabi United Group bought Manchester City for around 210 million pounds.",
      scene=dict(type='bignum', bg='sky', value=210, prefix='£', suffix='M', num_at='210', label='Manchester City, 2008', sub='Abu Dhabi United Group',
@@ -232,7 +232,7 @@ dict(text="So with state owners, the limit isn't money. It's the rules: spending
          dict(text='Deals with companies close to the owner', at='companies')], top=420, size=56)),
 
 # ---------------- TYPE 5: MULTI-CLUB ----------------
-dict(text="Type five. The multi-club group.", sfx='whoosh', pause=0.6,
+dict(text="Type five. The multi-club group.", sfx='whoosh', pause=0.4,
      scene=dict(type='chapter', bg='sky', num='5', kicker='Type', text='The multi-club\ngroup', tile='gold', accent='navy')),
 dict(text="The newest model is one owner, with many clubs.",
      scene=dict(type='network', bg='navy', center=dict(icon='person', color='gold', label='One owner'), nodes=[
@@ -280,7 +280,7 @@ dict(text="One owner's structure cost a club its first ever season in the Europa
      scene=dict(type='question', bg='navy', text="Their first ever Europa League season — gone", hl=['GONE'], icon='trophy', icon_size=360)),
 
 # ---------------- PAYOFF ----------------
-dict(text="Follow the money.", sfx='whoosh', pause=0.6,
+dict(text="Follow the money.", sfx='whoosh', pause=0.4,
      scene=dict(type='chapter', bg='gold', num='£', kicker='Payoff', text='Follow the\nmoney', tile='green', accent='paper')),
 dict(text="So how does an owner put money in? There are two main ways. Buying new shares in the club, or lending it money, and sometimes writing that loan off later.",
      scene=dict(type='list', bg='green', title='Money in', mark='num', items=[
