@@ -1,14 +1,15 @@
-"""Vertical (1080x1920) layouts for Shorts/Reels. Safe zone: x 70..950, y 250..1300.
-Bottom ~600 px (captions + platform UI) and the right ~130 px (buttons) stay free of content."""
+"""Vertical (1080x1920) layouts for Shorts/Reels. Safe zone: only the bottom band (y > 1300) is kept free;
+no side margins: content is centred on the x axis (x = 540).
+Bottom ~600 px (captions + platform UI) stays free of content."""
 import math
 import skia
 from draw import *
 import icons as I
 from scenes import colors, at, label_chip
 
-CX = 510            # content centre x (shifted left, away from the right-hand buttons)
+CX = 540            # content centred horizontally (no side margins)
 TOP, BOT = 260, 1290
-MAXW = 820
+MAXW = 960
 
 def vheader(c, t, sp, y=330):
     if not sp.get('title'): return
@@ -214,14 +215,18 @@ def V_icons(c, t, d, sp):
         y = y0 + i * gap
         p = prog(t, at(it, 0.1 + i * 0.25), 0.45)
         if p <= 0: continue
-        ix = CX - 180 if it.get('label') else CX
+        f = fit_font(it.get('label', '').upper() or ' ', FONT_HEAD, 52, 560)
+        isz = it.get('vsize', 200)
+        lw = text_w(it['label'].upper(), f) if it.get('label') else 0
+        iw = isz * {'stadium': 2.35, 'note': 1.6, 'ticket': 1.4, 'tv': 1.3, 'chart': 1.2, 'players': 1.4}.get(it['icon'], 1.1)
+        gw = iw + (40 + lw if lw else 0)           # icon + gap + label, centred as one group
+        ix = CX - gw / 2 + iw / 2
         c.save(); pop_scale(c, ix, y, p)
-        I.icon(c, it['icon'], ix, y, it.get('vsize', 200), t=t, **it.get('kw', {}))
+        I.icon(c, it['icon'], ix, y, isz, t=t, **it.get('kw', {}))
         c.restore()
         if it.get('label'):
             pl = ease_out(prog(t, at(it, 0.1 + i * 0.25) + 0.15, 0.35))
-            f = fit_font(it['label'].upper(), FONT_HEAD, 52, 420)
-            draw_text(c, it['label'].upper(), CX - 40, y + 18, f, P(it.get('label_color', fg)), 'left', alpha=pl, shadow=True)
+            draw_text(c, it['label'].upper(), ix + iw / 2 + 40, y + 18, f, P(it.get('label_color', fg)), 'left', alpha=pl, shadow=True)
 
 def V_follow(c, t, d, sp):
     """End card: full video on the channel + follow."""

@@ -646,16 +646,16 @@ def render_scene(c, t, d, sp):
 
 def draw_caption(c, t, chunks):
     """One-line captions for vertical video: chunk of 2-3 words, spoken word in gold. Sits above the
-    platform UI band (y ~1400) and left of the side buttons."""
+    platform UI band (y ~1400), centred on x."""
     for ch in chunks:
         if ch['t0'] <= t < ch['t1']:
             f = font(FONT_HEAD, 62)
             words = [w_[0].upper() for w_ in ch['words']]
             total = sum(text_w(w_, f) for w_ in words) + text_w(' ', f) * (len(words) - 1)
-            while total > 820 and f.getSize() > 36:   # long words (e.g. MIDDLESBROUGH) must stay inside the safe zone
+            while total > 960 and f.getSize() > 36:   # long words (e.g. MIDDLESBROUGH) must stay inside the safe zone
                 f = font(FONT_HEAD, f.getSize() - 2)
                 total = sum(text_w(w_, f) for w_ in words) + text_w(' ', f) * (len(words) - 1)
-            x = 510 - total / 2; y = 1410
+            x = 540 - total / 2; y = 1410
             for (wd, a0, a1), up in zip(ch['words'], words):
                 col = P('gold') if a0 <= t < a1 else P('paper')
                 draw_text(c, up, x, y, f, col, 'left', outline=(P('navy'), 12))
