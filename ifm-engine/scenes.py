@@ -448,7 +448,10 @@ def T_cta(c, t, d, sp):
     pb = ease_back(prog(t, sp.get('click_at', 1.3) + 0.4, 0.4))
     c.save(); pop_scale(c, W / 2 + 470, 380, pb)
     circle(c, W / 2 + 470, 380, 70, P('gold'), shadow=True, stroke=(P('navy'), 6))
-    draw_text(c, '♪', W / 2 + 470, 405, font(FONT_HEAD, 70), P('navy'))
+    bx, by = W / 2 + 470, 380   # bell drawn as shapes (the fonts have no bell/music glyph)
+    poly(c, [(bx - 26, by + 22), (bx - 20, by - 12), (bx - 10, by - 28), (bx + 10, by - 28), (bx + 20, by - 12), (bx + 26, by + 22)], P('navy'))
+    rrect(c, bx - 34, by + 18, 68, 10, 5, P('navy'))
+    circle(c, bx, by + 36, 8, P('navy'))
     c.restore()
     if sp.get('comment'):
         pq = ease_out(prog(t, at(sp, 0) + sp.get('comment_at', 2.5), 0.5))
