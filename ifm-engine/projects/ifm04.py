@@ -260,6 +260,13 @@ dict(text="In 2024–25, Paris Saint-Germain won the Champions League and earned
          dict(label='Paris SG', value=144.4, display='€144.4M', color='gold', at='Paris'),
          dict(label='Inter', value=136.6, display='€136.6M', color='paper', at='Inter'),
          dict(label='Arsenal', value=117, display='€117M', color='red', at='Arsenal')], max=170, top=400)),
+# ---------------- MID-ROLL CTA ----------------
+dict(text="And players know it. When a club is in the Champions League, it's easier to sign big names. When it isn't, the best players start looking elsewhere.",
+     scene=dict(type='split', bg='green', left=dict(head='In Europe', icon='players', kw=dict(color='gold'), text='Big names want to come', color='paper', at='in the Champions'),
+                right=dict(head='Not in Europe', icon='magnifier', text='Best players look elsewhere', color='gold', at="isn't"))),
+dict(text="Quick one. If this is changing how you see the table, subscribe. And tell me in the comments: which league do you think shares its TV money most fairly?",
+     sfx='pop', scene=dict(type='cta', bg='navy', click_at='subscribe', comment='Which league shares its TV money most fairly?', comment_at='comments')),
+
 dict(text="Compare that with a domestic cup. Finishing fourth in the league and qualifying for Europe is often worth far more than lifting a cup.",
      scene=dict(type='pair', bg='green', a=dict(top='Win a domestic cup', value='TROPHY', color='paper', at=0.1),
                 b=dict(top='Finish 4th', value='€MILLIONS', color='navy', vcolor='gold', at='fourth'))),
@@ -277,13 +284,6 @@ dict(text="Insider angle. In the last weeks of a season, players talk about the 
 dict(text="Qualify, and you can offer bigger wages and sign better players. Miss out, and you might have to sell your best one.",
      scene=dict(type='split', bg='paper', left=dict(head='Qualify', icon='chart', text='Bigger wages, better signings', color='green', at='Qualify'),
                 right=dict(head='Miss out', icon='chart', kw=dict(down=True), text='Maybe sell your best player', color='red', at='Miss'))),
-
-# ---------------- MID-ROLL CTA ----------------
-dict(text="And players know it. When a club is in the Champions League, it's easier to sign big names. When it isn't, the best players start looking elsewhere.",
-     scene=dict(type='split', bg='green', left=dict(head='In Europe', icon='players', kw=dict(color='gold'), text='Big names want to come', color='paper', at='in the Champions'),
-                right=dict(head='Not in Europe', icon='magnifier', text='Best players look elsewhere', color='gold', at="isn't"))),
-dict(text="Quick one. If this is changing how you see the table, subscribe. And tell me in the comments: which league do you think shares its TV money most fairly?",
-     sfx='pop', scene=dict(type='cta', bg='navy', click_at='subscribe', comment='Which league shares its TV money most fairly?', comment_at='comments')),
 
 # ---------------- 5. WHY THE GAP GROWS ----------------
 dict(text="Part five. Why the gap between leagues grows.", sfx='whoosh', pause=0.4,
