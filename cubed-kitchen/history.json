@@ -279,5 +279,16 @@
    "uuid": "4142987655385466827",
    "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=4142987655385466827"
   }
+ },
+ {
+  "food": "Mandarin",
+  "date": "2026-11-13",
+  "slot": 14,
+  "title": "1,000 Cuts on a Mandarin 🔪 How Many Cubes?",
+  "duration": 77.4,
+  "metricool": {
+   "uuid": "3367526734994951270",
+   "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=3367526734994951270"
+  }
  }
 ]
