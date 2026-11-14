@@ -301,5 +301,16 @@
    "uuid": "163475991932849974",
    "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=163475991932849974"
   }
+ },
+ {
+  "food": "Club Sandwich",
+  "date": "2026-11-14",
+  "slot": 10,
+  "title": "1,000 Cuts on a Club Sandwich 🔪 How Many Cubes?",
+  "duration": 77.4,
+  "metricool": {
+   "uuid": "1939491435393403578",
+   "plannerUrl": "https://app.metricool.com/planner/calendar?blogId=7902511&openWithPostUuid=1939491435393403578"
+  }
  }
 ]
